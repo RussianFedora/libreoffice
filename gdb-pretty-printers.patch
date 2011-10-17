@@ -1,0 +1,2028 @@
+From b852c77e068a8f3dedf550470be99d913241d7a8 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Fri, 29 Jul 2011 13:22:35 +0200
+Subject: [PATCH 1/2] add gdb pretty printers
+
+---
+ solenv/gdb/libreoffice/__init__.py           |   30 ++
+ solenv/gdb/libreoffice/cppu.py               |  164 ++++++++
+ solenv/gdb/libreoffice/sal.py                |  121 ++++++
+ solenv/gdb/libreoffice/svl.py                |  125 ++++++
+ solenv/gdb/libreoffice/sw.py                 |  119 ++++++
+ solenv/gdb/libreoffice/tl.py                 |  371 ++++++++++++++++++
+ solenv/gdb/libreoffice/util/__init__.py      |   30 ++
+ solenv/gdb/libreoffice/util/compatibility.py |   38 ++
+ solenv/gdb/libreoffice/util/printing.py      |  139 +++++++
+ solenv/gdb/libreoffice/util/string.py        |   93 +++++
+ solenv/gdb/libreoffice/util/uno.py           |  539 ++++++++++++++++++++++++++
+ 11 files changed, 1769 insertions(+), 0 deletions(-)
+ create mode 100644 solenv/gdb/libreoffice/__init__.py
+ create mode 100644 solenv/gdb/libreoffice/cppu.py
+ create mode 100644 solenv/gdb/libreoffice/sal.py
+ create mode 100644 solenv/gdb/libreoffice/svl.py
+ create mode 100644 solenv/gdb/libreoffice/sw.py
+ create mode 100644 solenv/gdb/libreoffice/tl.py
+ create mode 100644 solenv/gdb/libreoffice/util/__init__.py
+ create mode 100644 solenv/gdb/libreoffice/util/compatibility.py
+ create mode 100644 solenv/gdb/libreoffice/util/printing.py
+ create mode 100644 solenv/gdb/libreoffice/util/string.py
+ create mode 100644 solenv/gdb/libreoffice/util/uno.py
+
+diff --git a/solenv/gdb/libreoffice/__init__.py b/solenv/gdb/libreoffice/__init__.py
+new file mode 100644
+index 0000000..90d8012
+--- /dev/null
++++ b/solenv/gdb/libreoffice/__init__.py
+@@ -0,0 +1,30 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/cppu.py b/solenv/gdb/libreoffice/cppu.py
+new file mode 100644
+index 0000000..8707ea5
+--- /dev/null
++++ b/solenv/gdb/libreoffice/cppu.py
+@@ -0,0 +1,164 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++from libreoffice.util import printing
++from libreoffice.util.uno import TypeClass, make_uno_type, uno_cast
++
++class UnoAnyPrinter(object):
++    '''Prints UNO any'''
++
++    def __init__(self, typename, value):
++        self.value = value
++        self.typename = typename.replace('com::sun::star::', '')
++
++    def to_string(self):
++        if self._is_set():
++            return ('%s %s' % (self.typename, self._make_string()))
++        else:
++            return "empty %s" % self.typename
++
++    def _is_set(self):
++        return self.value['pType'].dereference()['eTypeClass'] != TypeClass.VOID
++
++    def _make_string(self):
++        ptr = self.value['pData']
++        assert ptr
++        type_desc = self.value['pType']
++        assert type_desc
++        type = make_uno_type(type_desc.dereference())
++        assert type
++        return str(uno_cast(type, ptr).dereference())
++
++class UnoReferencePrinter(object):
++    '''Prints reference to a UNO interface'''
++
++    def __init__(self, typename, value):
++        self.value = value
++        self.typename = typename.replace('com::sun::star::', '')
++
++    def to_string(self):
++        iface = self.value['_pInterface']
++        if iface:
++            impl = iface.cast(self._itype()).dereference()
++            return '%s to %s' % (self.typename, str(impl))
++        else:
++            return "empty %s" % self.typename
++
++    def _itype(self):
++        return self.value.type.template_argument(0).pointer()
++
++class UnoSequencePrinter(object):
++    '''Prints UNO Sequence'''
++
++    class iterator(object):
++        '''Sequence iterator'''
++
++        def __init__(self, first, size):
++            self.item = first
++            self.size = size
++            self.count = 0
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            if self.count == self.size:
++                raise StopIteration
++            count = self.count
++            self.count = self.count + 1
++            elem = self.item.dereference()
++            self.item = self.item + 1
++            return ('[%d]' % count, elem)
++
++
++    def __init__(self, typename, value):
++        self.value = value
++        self.typename = typename.replace('com::sun::star::', '')
++
++    def to_string(self):
++        pimpl = self.value['_pSequence']
++        if pimpl:
++            impl = pimpl.dereference()
++            elems = impl['nElements']
++            if elems == 0:
++                return "empty %s" % self.typename
++            else:
++                return "%s of length %d" % (self.typename, elems)
++        else:
++            return "uninitialized %s" % self.typename
++
++    def children(self):
++        pimpl = self.value['_pSequence']
++        if pimpl:
++            impl = pimpl.dereference()
++            elemtype = self.value.type.template_argument(0)
++            elements = impl['elements'].cast(elemtype.pointer())
++            return self.iterator(elements, int(impl['nElements']))
++        else:
++            # TODO is that the best thing to do here?
++            return None
++
++    def display_hint(self):
++        if self.value['_pSequence']:
++            return 'array'
++        else:
++            return None
++
++class UnoTypePrinter(object):
++    '''Prints UNO Type'''
++
++    def __init__(self, typename, value):
++        self.value = value
++        self.typename = typename.replace('com::sun::star::', '')
++
++    def to_string(self):
++        uno = make_uno_type(self.value)
++        if uno:
++            return "%s %s" % (self.typename, uno.tag)
++            # return "%s %s" % (self.typename, uno.typename)
++        else:
++            return "invalid %s" % self.typename
++
++printer = None
++
++def build_pretty_printers():
++    global printer
++
++    printer = printing.Printer("libreoffice/cppu")
++
++    # basic UNO stuff
++    printer.add('_uno_Any', UnoAnyPrinter)
++    printer.add('com::sun::star::uno::Any', UnoAnyPrinter)
++    printer.add('com::sun::star::uno::Sequence', UnoSequencePrinter)
++    printer.add('com::sun::star::uno::Type', UnoTypePrinter)
++
++def register_pretty_printers(obj):
++    printing.register_pretty_printer(printer, obj)
++
++build_pretty_printers()
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/sal.py b/solenv/gdb/libreoffice/sal.py
+new file mode 100644
+index 0000000..e5a5d32
+--- /dev/null
++++ b/solenv/gdb/libreoffice/sal.py
+@@ -0,0 +1,121 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++
++from libreoffice.util import printing
++from libreoffice.util.string import StringPrinterHelper
++
++class RtlStringPrinter(StringPrinterHelper):
++    '''Prints rtl_String or rtl_uString'''
++
++    def __init__(self, typename, val, encoding = None):
++        super(RtlStringPrinter, self).__init__(typename, val, encoding)
++
++    def data(self):
++        return self.val['buffer']
++
++    def length(self):
++        return self.val['length']
++
++class StringPrinter(StringPrinterHelper):
++    '''Prints rtl:: strings and string buffers'''
++
++    def __init__(self, typename, val, encoding = None):
++        super(StringPrinter, self).__init__(typename, val, encoding)
++
++    def valid(self):
++        return self.val['pData']
++
++    def data(self):
++        assert self.val['pData']
++        return self.val['pData'].dereference()['buffer']
++
++    def length(self):
++        assert self.val['pData']
++        return self.val['pData'].dereference()['length']
++
++class SalUnicodePrinter(StringPrinterHelper):
++    '''Prints a sal_Unicode*'''
++
++    def __init__(self, typename, val):
++        super(SalUnicodePrinter, self).__init__(typename, val, 'utf-16')
++
++    def data(self):
++        return self.val
++
++    @staticmethod
++    def query(type):
++        type = type.unqualified()
++        if type.code != gdb.TYPE_CODE_PTR:
++            return False
++        return str(type.target()) == 'sal_Unicode'
++
++class RtlReferencePrinter(object):
++    '''Prints rtl::Reference'''
++
++    def __init__(self, typename, val):
++        self.typename = typename
++        self.val = val
++
++    def to_string(self):
++        print("RtlReferencePrinter:to_string")
++        pointee = self.val['m_pBody']
++        if pointee:
++            val = pointee.dereference()
++            return '%s to %s' % (self.typename, str(val))
++        else:
++            return "empty %s" % self.typename
++
++printer = None
++
++def build_pretty_printers():
++    global printer
++
++    printer = printing.Printer("libreoffice/sal")
++
++    # strings and string buffers
++    printer.add('_rtl_String', RtlStringPrinter)
++    printer.add('_rtl_uString', lambda name, val: RtlStringPrinter(name,
++        val, 'utf-16le'))
++    printer.add('rtl::OString', StringPrinter)
++    printer.add('rtl::OUString', lambda name, val: StringPrinter(name, val, 'utf-16'))
++    printer.add('rtl::OStringBuffer', StringPrinter)
++    printer.add('rtl::OUStringBuffer', lambda name, val: StringPrinter(name, val, 'utf-16'))
++    printer.add('sal_Unicode', SalUnicodePrinter, SalUnicodePrinter.query)
++
++    # other stuff
++    printer.add('rtl::Reference', RtlReferencePrinter)
++
++    return printer
++
++def register_pretty_printers(obj):
++    printing.register_pretty_printer(printer, obj)
++
++build_pretty_printers()
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/svl.py b/solenv/gdb/libreoffice/svl.py
+new file mode 100644
+index 0000000..639f7c5
+--- /dev/null
++++ b/solenv/gdb/libreoffice/svl.py
+@@ -0,0 +1,125 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++
++from libreoffice.util import printing
++
++class SvArrayPrinter(object):
++    '''Prints macro-declared arrays from svl module'''
++
++    def __init__(self, typename, value):
++        self.typename = typename
++        self.value = value
++
++    def to_string(self):
++        if int(self.value['nA']):
++            return "%s of length %d" % (self.typename, self.value['nA'])
++        else:
++            return "empty " + self.typename
++
++    def children(self):
++        return self._iterator(self.value['pData'], self.value['nA'])
++
++    def display_hint(self):
++        return 'array'
++
++    class _iterator(object):
++
++        def __init__(self, data, count):
++            self.data = data
++            self.count = count
++            self.pos = 0
++            self._check_invariant()
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            if self.pos == self.count:
++                raise StopIteration()
++
++            pos = self.pos
++            elem = self.data[pos]
++            self.pos = self.pos + 1
++
++            self._check_invariant()
++            return (str(pos), elem)
++
++        def _check_invariant(self):
++            assert self.count >= 0
++            if self.count > 0:
++                assert self.data
++            assert self.pos >= 0
++            assert self.pos <= self.count
++
++    @staticmethod
++    def query(type):
++        if type.code == gdb.TYPE_CODE_REF:
++            type = type.target()
++        type = type.unqualified().strip_typedefs()
++
++        if not type.tag:
++            return False
++
++        ushort = gdb.lookup_type('sal_uInt16')
++        conforming = True
++        for field in type.fields():
++            if field.name == 'pData':
++                conforming = field.type.code == gdb.TYPE_CODE_PTR
++            elif field.name == 'nFree':
++                conforming = field.type == ushort
++            elif field.name == 'nA':
++                conforming = field.type == ushort
++            else:
++                conforming = False
++            if not conforming:
++                return False
++
++        try:
++            gdb.lookup_type('FnForEach_' + type.tag)
++        except RuntimeError:
++            return False
++
++        return True
++
++printer = None
++
++def build_pretty_printers():
++    global printer
++
++    printer = printing.Printer("libreoffice/svl")
++
++    # macro-based arrays from svl module
++    printer.add('SvArray', SvArrayPrinter, SvArrayPrinter.query)
++
++def register_pretty_printers(obj):
++    printing.register_pretty_printer(printer, obj)
++
++build_pretty_printers()
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/sw.py b/solenv/gdb/libreoffice/sw.py
+new file mode 100644
+index 0000000..761c153
+--- /dev/null
++++ b/solenv/gdb/libreoffice/sw.py
+@@ -0,0 +1,119 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++from libreoffice.util import printing
++
++
++class BigPtrArrayPrinter(object):
++    '''Prints BigPtrArray.'''
++
++    def __init__(self, typename, value):
++        self.typename = typename
++        self.value = value
++
++    def to_string(self):
++        length = self.value['nSize']
++        if length > 0:
++            return "%s of length %d" % (self.typename, length)
++        else:
++            return "empty %s" % self.typename
++
++    def children(self):
++        return self._iterator(self.value)
++
++    def display_hint(self):
++        return 'array'
++
++
++    class _iterator(object):
++
++        def __init__(self, array):
++            self.blocks = array['ppInf']
++            self.count = array['nSize']
++            self.pos = 0
++            self.block_count = array['nBlock']
++            self.block_pos = 0
++            self.block = None
++            self._next_block(False)
++            self._check_invariant()
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            if self.pos == self.count:
++                raise StopIteration()
++
++            name = str(self.pos)
++            value = self.block['pData'][self.pos - self.block['nStart']]
++            if self.pos == self.block['nEnd']:
++                self._next_block()
++            self.pos += 1
++
++            self._check_invariant()
++            return (name, value)
++
++        def _next_block(self, advance = True):
++            if advance:
++                self.block_pos += 1
++
++            if self.block_pos == self.block_count:
++                return
++
++            pblock = self.blocks[self.block_pos]
++            assert pblock
++            block = pblock.dereference()
++            start = block['nStart']
++            end = block['nEnd']
++            assert end - start + 1 == block['nElem']
++            if self.block:
++                assert start == self.block['nEnd'] + 1
++                assert end <= self.count
++            else:
++                assert start == 0
++            self.block = block
++
++        def _check_invariant(self):
++            assert self.pos <= self.count
++            assert self.block_pos <= self.block_count
++            if self.pos == 0 and self.pos < self.count:
++                assert self.block != None
++
++printer = None
++
++def build_pretty_printers():
++    global printer
++
++    printer = printing.Printer("libreoffice/sw")
++    printer.add('BigPtrArray', BigPtrArrayPrinter)
++
++def register_pretty_printers(obj):
++    printing.register_pretty_printer(printer, obj)
++
++build_pretty_printers()
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/tl.py b/solenv/gdb/libreoffice/tl.py
+new file mode 100644
+index 0000000..62c5ff5
+--- /dev/null
++++ b/solenv/gdb/libreoffice/tl.py
+@@ -0,0 +1,371 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++
++from libreoffice.util import printing
++from libreoffice.util.string import StringPrinterHelper
++
++class StringPrinter(StringPrinterHelper):
++    '''Prints ByteString or UniString'''
++
++    def __init__(self, typename, val, encoding = None):
++        super(StringPrinter, self).__init__(typename, val, encoding)
++
++    def valid(self):
++        data = self.val['mpData']
++        # mnRefCount is not a good indicator: it seems there could be
++        # cases where it is negative (-7FFFFFED)
++        return data #and data.dereference()['mnRefCount'] > 0
++
++    def data(self):
++        assert self.val['mpData']
++        return self.val['mpData'].dereference()['maStr']
++
++    def length(self):
++        assert self.val['mpData']
++        return self.val['mpData'].dereference()['mnLen']
++
++class BigIntPrinter(object):
++    '''Prints big integer'''
++
++    def __init__(self, typename, val):
++        self.val = val
++
++    def to_string(self):
++        if self.val['bIsSet']:
++            if self.val['bIsBig']:
++                return self._value()
++            else:
++                return self.val['nVal']
++        else:
++            return "unset %s" % self.typename
++
++    def _value(self):
++        len = self.val['nLen']
++        digits = self.val['nNum']
++        dsize = digits.dereference().type.sizeof * 8
++        num = 0
++        # The least significant byte is on index 0
++        for i in reversed(range(0, len)):
++            num <<= dsize
++            num += digits[i]
++        return num
++
++class ColorPrinter(object):
++    '''Prints color as rgb(r, g, b) or rgba(r, g, b, a)'''
++
++    def __init__(self, typename, val):
++        self.val = val
++
++    def to_string(self):
++        color = self.val['mnColor']
++        b = color & 0xff
++        g = (color >> 8) & 0xff
++        r = (color >> 16) & 0xff
++        a = (color >> 24) & 0xff
++        if a:
++            return "rgba(%d, %d, %d, %d)" % (r, g, b, a)
++        else:
++            return "rgb(%d, %d, %d)" % (r, g, b)
++
++class FractionPrinter(object):
++    '''Prints fraction'''
++
++    def __init__(self, typename, val):
++        self.typename = typename
++        self.val = val
++
++    def to_string(self):
++        numerator = self.val['nNumerator']
++        denominator = self.val['nDenominator']
++        if denominator > 0:
++            return "%d/%d" % (numerator, denominator)
++        else:
++            return "invalid %s" % self.typename
++
++class DateTimeImpl(object):
++
++    def __init__(self, date, time):
++        self.date = date
++        self.time = time
++
++    def __str__(self):
++        result = ''
++        if self.date:
++            result += str(self.date)
++            if self.time:
++                result += ' '
++        if self.time:
++            result += str(self.time)
++        return result
++
++    @staticmethod
++    def parse(val):
++        return DateTimeImpl(DateImpl.parse(val), TimeImpl.parse(val))
++
++class DateTimePrinter(object):
++    '''Prints date and time'''
++
++    def __init__(self, typename, val):
++        self.val = val
++
++    def to_string(self):
++        return str(DateTimeImpl.parse(self.val))
++
++class DateImpl(DateTimeImpl):
++
++    def __init__(self, year, month, day):
++        super(DateImpl, self).__init__(self, None)
++        self.year = year
++        self.month = month
++        self.day = day
++
++    def __str__(self):
++        return "%d-%d-%d" % (self.year, self.month, self.day)
++
++    @staticmethod
++    def parse(val):
++        date = val['nDate']
++        d = date % 100
++        m = (date / 100) % 100
++        y = date / 10000
++        return DateImpl(y, m, d)
++
++class DatePrinter(object):
++    '''Prints date'''
++
++    def __init__(self, typename, val):
++        self.val = val
++
++    def to_string(self):
++        return str(DateImpl.parse(self.val))
++
++class TimeImpl(DateTimeImpl):
++
++    def __init__(self, hour, minute, second, hundreth_of_second = 0):
++        super(TimeImpl, self).__init__(None, self)
++        self.hour = hour
++        self.minute = minute
++        self.second = second
++        self.hundreth_of_second = hundreth_of_second
++
++    def __str__(self):
++        decimal = ''
++        if self.hundreth_of_second != 0:
++            decimal = '.%d' % self.hundreth_of_second
++        return "%d:%d:%d%s" % (self.hour, self.minute, self.second, decimal)
++
++    @staticmethod
++    def parse(val):
++        time = val['nTime']
++        h = time / 1000000
++        m = (time / 10000) % 100
++        s = (time / 100) % 100
++        s_100 = time % 100
++        return TimeImpl(h, m, s, s_100)
++
++class TimePrinter(object):
++    '''Prints time'''
++
++    def __init__(self, typename, val):
++        self.val = val
++
++    def to_string(self):
++        return str(TimeImpl.parse(self.val))
++
++class IteratorHelper(object):
++    '''Implements a container iterator useable for both 'linear'
++        containers (like DynArray or List) and Tables
++    '''
++
++    def __init__(self, block, count, type = None):
++        self.count = count
++        self.type = type
++        self.pos = 0
++        self.block = None
++        self.block_count = 0
++        self.block_pos = 0
++        if block:
++            self._next_block(block)
++
++        self._check_invariant()
++
++    def __iter__(self):
++        return self
++
++    def next(self):
++        if self.pos == self.count:
++            raise StopIteration()
++
++        if self.block_pos == self.block_count:
++            self._next_block(self.block['pNext'])
++
++        name = self.name()
++        val = self.value()
++        self.advance()
++
++        self._check_invariant()
++        return (name, val)
++
++    def _next_block(self, block):
++        assert block
++
++        self.block = block.dereference()
++        self.block_pos = 0
++        self.block_count = block['nCount']
++
++        assert self.block_count <= block['nSize']
++        assert self.block_count + self.pos <= self.count
++
++    def _check_invariant(self):
++        assert self.count >= 0
++        assert self.pos >= 0
++        assert self.pos <= self.count
++        assert self.block_count >= 0
++        if self.pos < self.count:
++            assert self.block_count > 0
++            assert self.block != None
++        assert self.block_count <= self.count
++        assert self.block_pos >= 0
++        assert self.block_pos <= self.block_count
++
++class NoItemType(Exception):
++    pass
++
++class ContainerHelper(object):
++    '''Provides support for specialized container printers'''
++
++    def __init__(self, typename, val, iterator):
++        self.typename = typename
++        self.val = val
++        self.iterator = iterator
++
++    def to_string(self):
++        size = self.val['nCount']
++        if size > 0:
++            return "%s of length %d" % (self.typename, size)
++        elif size == 0:
++            return "empty %s" % self.typename
++        else:
++            return "invalid %s" % self.typename
++
++    def children(self):
++        count = self.val.cast(gdb.lookup_type('Container'))['nCount']
++        return self.iterator(self.val['pFirstBlock'], count)
++
++class LinearIterator(IteratorHelper):
++    '''Is iterator for 'linear' container'''
++
++    def __init__(self, block, count, type = None):
++        super(LinearIterator, self).__init__(block, count, type)
++
++    def name(self):
++        return str(self.pos)
++
++    def value(self):
++        nodes = self.block['pNodes']#.cast(self.type.pointer())
++        return nodes[self.block_pos]
++
++    def advance(self):
++        self.pos += 1
++        self.block_pos += 1
++
++class LinearContainerPrinter(ContainerHelper):
++    '''Prints 'linear' container, like DynArray or List'''
++
++    def __init__(self, typename, val):
++        super(LinearContainerPrinter, self).__init__(typename, val, LinearIterator)
++
++    def display_hint(self):
++        return 'array'
++
++class TableIterator(IteratorHelper):
++    '''Is iterator for Table'''
++
++    def __init__(self, block, count, type = None):
++        super(TableIterator, self).__init__(block, count, type)
++        # ULONG doesn't work on 64-bit for some reason (gdb says it has
++        # size 4 and it's not a typedef to sal_uIntPtr)
++        self._key_type = gdb.lookup_type('sal_uIntPtr')
++        self.is_key = True
++
++    def name(self):
++        return ''
++
++    def value(self):
++        nodes = self.block['pNodes']#.cast(self.type.pointer())
++        val = nodes[self.block_pos]
++        if self.is_key:
++            val = str(val.cast(self._key_type))
++        return val
++
++    def advance(self):
++        self.pos += 1
++        self.block_pos += 1
++        self.is_key = not self.is_key
++
++class TablePrinter(ContainerHelper):
++    '''Prints table'''
++
++    def __init__(self, typename, val):
++        super(TablePrinter, self).__init__(typename, val, TableIterator)
++
++    def display_hint(self):
++        return 'map'
++
++printer = None
++
++def build_pretty_printers():
++    global printer
++
++    printer = printing.Printer('libreoffice/tl')
++
++    # old-style strings
++    printer.add('ByteString', StringPrinter)
++    printer.add('String', lambda name, val: StringPrinter(name, val, 'utf-16'))
++
++    # old-style containers
++    printer.add('DynArray', LinearContainerPrinter)
++    printer.add('List', LinearContainerPrinter)
++    printer.add('Stack', LinearContainerPrinter)
++    printer.add('Table', TablePrinter)
++
++    # various types
++    printer.add('BigInt', BigIntPrinter)
++    printer.add('Color', ColorPrinter)
++    printer.add('Fraction', FractionPrinter)
++    printer.add('DateTime', DateTimePrinter)
++    printer.add('Date', DatePrinter)
++    printer.add('Time', TimePrinter)
++
++def register_pretty_printers(obj):
++    printing.register_pretty_printer(printer, obj)
++
++build_pretty_printers()
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/util/__init__.py b/solenv/gdb/libreoffice/util/__init__.py
+new file mode 100644
+index 0000000..90d8012
+--- /dev/null
++++ b/solenv/gdb/libreoffice/util/__init__.py
+@@ -0,0 +1,30 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/util/compatibility.py b/solenv/gdb/libreoffice/util/compatibility.py
+new file mode 100644
+index 0000000..3011f93
+--- /dev/null
++++ b/solenv/gdb/libreoffice/util/compatibility.py
+@@ -0,0 +1,38 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++
++use_gdb_printing = True
++try:
++    import gdb.printing
++except ImportError:
++    use_gdb_printing = False
++
++use_lazy_string = hasattr(gdb.Value, 'lazy_string')
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/util/printing.py b/solenv/gdb/libreoffice/util/printing.py
+new file mode 100644
+index 0000000..e1f55b3
+--- /dev/null
++++ b/solenv/gdb/libreoffice/util/printing.py
+@@ -0,0 +1,139 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++from collections import Mapping
++import gdb
++import re
++
++from libreoffice.util.compatibility import use_gdb_printing
++
++class SimplePrinter(object):
++
++    def __init__(self, name, function):
++        self.name = name
++        self.function = function
++        self.enabled = True
++
++    def invoke(self, val):
++        if not self.enabled:
++            return None
++        return self.function(self.name, val)
++
++class NameLookup(Mapping):
++
++    def __init__(self):
++        self.map = {}
++        self.name_regex = re.compile('^([\w:]+)(<.*>)?')
++
++    def add(self, name, printer):
++        self.map[name] = printer
++
++    def __len__(self):
++        return len(self.map)
++
++    def __getitem__(self, type):
++        typename = self._basic_type(type)
++        if typename and typename in self.map:
++            return self.map[typename]
++        return None
++
++    def __iter__(self):
++        return self.map
++
++    def _basic_type(self, type):
++        basic_type = self.basic_type(type)
++        if basic_type:
++            match = self.name_regex.match(basic_type)
++            if match:
++                return match.group(1)
++        return None
++
++    @staticmethod
++    def basic_type(type):
++        if type.code == gdb.TYPE_CODE_REF:
++            type = type.target()
++        type = type.unqualified().strip_typedefs()
++        return type.tag
++
++class FunctionLookup(Mapping):
++
++    def __init__(self):
++        self.map = {}
++
++    def add(self, test, printer):
++        self.map[test] = printer
++
++    def __len__(self):
++        return len(self.map)
++
++    def __getitem__(self, type):
++        for (test, printer) in self.map.iteritems():
++            if test(type):
++                return printer
++        return None
++
++    def __iter__(self):
++        return self.map
++
++class Printer(object):
++
++    def __init__(self, name):
++        self.name = name
++        self.subprinters = []
++        self.name_lookup = NameLookup()
++        self.func_lookup = FunctionLookup()
++        self.enabled = True
++
++    def add(self, name, function, lookup = None):
++        printer = SimplePrinter(name, function)
++        self.subprinters.append(printer)
++        if not lookup:
++            self.name_lookup.add(name, printer)
++        else:
++            self.func_lookup.add(lookup, printer)
++
++
++    def __call__(self, val):
++        printer = self.name_lookup[val.type]
++        if not printer:
++            printer = self.func_lookup[val.type]
++
++        if printer:
++            return printer.invoke(val)
++        return None
++
++def register_pretty_printer(printer, obj):
++    '''Registers printer with objfile'''
++
++    if use_gdb_printing:
++        gdb.printing.register_pretty_printer(obj, printer)
++    else:
++        if obj is None:
++            obj = gdb
++        obj.pretty_printers.append(printer)
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/util/string.py b/solenv/gdb/libreoffice/util/string.py
+new file mode 100644
+index 0000000..e2db622
+--- /dev/null
++++ b/solenv/gdb/libreoffice/util/string.py
+@@ -0,0 +1,93 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++
++from libreoffice.util.compatibility import use_lazy_string
++
++class StringPrinterHelper(object):
++    '''Base for all string pretty printers'''
++
++    class MustBeImplemented(Exception):
++        pass
++
++    def __init__(self, typename, val, encoding = None):
++        self.typename = typename
++        self.val = val
++        self.encoding = encoding
++
++    def to_string(self):
++        data = self.data()
++        len = self.length()
++        if self.valid():
++            return self.make_string(data, self.encoding, len)
++        else:
++            return "unintialized %s" % self.typename
++
++    def display_hint(self):
++        if self.valid():
++            return 'string'
++        else:
++            return None
++
++    def valid(self):
++        return True
++
++    def data(self):
++        raise self.MustBeImplemented()
++
++    def length(self):
++        return -1
++
++    @staticmethod
++    def make_string(data, encoding = None, length = -1):
++        '''Creates a new string from memory'''
++
++        if not encoding:
++            encoding = ''
++
++        if use_lazy_string:
++            return data.lazy_string(encoding, length)
++
++        # we need to determine length, if not given (for sal_Unicode*)
++        if length < 0:
++            length = 0
++            while data[length] != 0 and length <= 512: # arbitrary limit
++                length += 1
++
++        # The gdb.Value.string() conversion works on array of bytes, but
++        # the length we have is the length of the string. So we must
++        # multiply it by width of character if the string is Unicode.
++        width = data[0].type.sizeof
++        if width > 1:
++            length = length * width
++
++        char = gdb.lookup_type('char')
++        bytes = data.cast(char.pointer())
++        return bytes.string(encoding, length = length)
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/libreoffice/util/uno.py b/solenv/gdb/libreoffice/util/uno.py
+new file mode 100644
+index 0000000..23cf06a
+--- /dev/null
++++ b/solenv/gdb/libreoffice/util/uno.py
+@@ -0,0 +1,539 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import gdb
++import re
++
++class UnsupportedType(Exception):
++    '''Represents exception thrown when an unsupported UNO type(like
++        array or union) is used.'''
++
++    def __init__(self, type):
++        self.type = type
++
++class UnknownType(Exception):
++    '''Represents exception thrown when an unknown UNO type is used.'''
++
++    def __init__(self, type):
++        self.type = type
++
++class TypeClass(object):
++    '''Represents type class of UNO type.'''
++
++    # type class of void
++    VOID = 0
++    # type class of char
++    CHAR = 1
++    # type class of boolean
++    BOOLEAN = 2
++    # type class of byte
++    BYTE = 3
++    # type class of short
++    SHORT = 4
++    # type class of unsigned short
++    UNSIGNED_SHORT = 5
++    # type class of long
++    LONG = 6
++    # type class of unsigned long
++    UNSIGNED_LONG = 7
++    # type class of hyper
++    HYPER = 8
++    # type class of unsigned hyper
++    UNSIGNED_HYPER = 9
++    # type class of float
++    FLOAT = 10
++    # type class of double
++    DOUBLE = 11
++    # type class of string
++    STRING = 12
++    # type class of type
++    TYPE = 13
++    # type class of any
++    ANY = 14
++    # type class of enum
++    ENUM = 15
++    # type class of typedef
++    TYPEDEF = 16
++    # type class of struct
++    STRUCT = 17
++    # type class of union (not implemented)
++    UNION = 18
++    # type class of exception
++    EXCEPTION = 19
++    # type class of sequence
++    SEQUENCE = 20
++    # type class of array (not implemented)
++    ARRAY = 21
++    # type class of interface
++    INTERFACE = 22
++    # type class of service (not implemented)
++    SERVICE = 23
++    # type class of module (not implemented)
++    MODULE = 24
++    # type class of interface method
++    INTERFACE_METHOD = 25
++    # type class of interface attribute
++    INTERFACE_ATTRIBUTE = 26
++    # type class of unknown type
++    UNKNOWN = 27
++    # type class of properties
++    PROPERTY = 28
++    # type class of constants
++    CONSTANT = 29
++    # type class of constants groups
++    CONSTANTS = 30
++    # type class of singletons
++    SINGLETON = 31
++
++class TemplateType(object):
++
++    def __init__(self, template, *args):
++        self.template = template
++        self.args = args
++
++    def __str__(self):
++        argtypes = [str(gdb.lookup_type(arg).strip_typedefs()) for arg in self.args]
++        return self.template + '<' + ', '.join(argtypes) + '>'
++
++class Type(object):
++    '''Describes a UNO type.'''
++
++    def __init__(self, typeclass, tag):
++        '''Constructs a new Type.
++            @param[in] typeclass value of com::sun::star::uno::TypeClass
++            @param[in] tag UNO name of the type
++        '''
++        self.typeclass = typeclass
++        self.tag = tag
++        # C++ name of the type
++        self.typename = None
++
++    def type(self):
++        '''Gets gdb.Type for the type'''
++        if self.typename:
++            return gdb.lookup_type(str(self.typename))
++        return None
++
++    @staticmethod
++    def uno2cpp(typename):
++        return str(typename).replace('.', '::')[1:-1]
++
++    def strip_typedefs(self):
++        copy = self.copy()
++        copy.typename = self._strip_typedefs(self.typename)
++        return copy
++
++    def _strip_typedefs(self, typename):
++        template_args = re.compile('([^<]+)(<.*>)')
++        match = template_args.match(typename)
++        type = self._lookup_type(match.group(1))
++        types = []
++        if match.group(2):
++            list_delim = re.compile(', *')
++            # FIXME: this does not work with nested templates
++            for arg in match.group(2).split(list_delim):
++                types.append(self._lookup_type(arg))
++
++        typename = str(type)
++        if not types.empty():
++            typename += '<' + types.join(', ') + '>'
++
++        return typename
++
++    def _lookup_type(self, typename):
++        if typename != '':
++            type = gdb.lookup_type(typename)
++            if type:
++                type = type.strip_typedefs()
++        return type
++
++def make_uno_type(val):
++    '''Creates a UNO type from gdb.Value of type
++        com::sun::star::uno::Type, typelib_TypeDescription, or
++        typelib_TypeDescriptionReference
++    '''
++
++    cssu_type = 'com::sun::star::uno::Type'
++    type_desc = '_typelib_TypeDescription'
++    type_descs =(
++            type_desc,
++            '_typelib_CompoundTypeDescription',
++            '_typelib_StructTypeDescription',
++            '_typelib_IndirectTypeDescription',
++            '_typelib_EnumTypeDescription',
++            '_typelib_InterfaceMemberTypeDescription',
++            '_typelib_InterfaceMethodTypeDescription',
++            '_typelib_InterfaceAttributeTypeDescription',
++            '_typelib_InterfaceTypeDescription'
++    )
++    type_desc_ref = '_typelib_TypeDescriptionReference'
++
++    type = val.type.strip_typedefs()
++
++    if type.tag == cssu_type:
++        pvalue = val['_pType']
++        assert pvalue
++        val = pvalue.dereference()
++        type = val.type.strip_typedefs()
++
++    while type.tag == type_desc_ref:
++        pvalue = val['pType']
++        assert pvalue
++        val = pvalue.dereference()
++        type = val.type.strip_typedefs()
++
++    if type.tag not in type_descs:
++        return None
++
++    # determination of the UNO type
++    full_val = val
++    if type.tag != type_desc:
++        while 'aBase' in val:
++            val = val['aBase']
++    type_class = int(val['eTypeClass'])
++    name = val['pTypeName'].dereference()
++    uno_type = None
++    if type_class == TypeClass.VOID:
++        uno_type = VoidType()
++    elif type_class == TypeClass.CHAR:
++        uno_type = PrimitiveType(type_class, name, 'sal_Char')
++    elif type_class == TypeClass.BOOLEAN:
++        uno_type = PrimitiveType(type_class, name, 'sal_Bool')
++    elif type_class == TypeClass.BYTE:
++        uno_type = PrimitiveType(type_class, name, 'sal_Int8')
++    elif type_class == TypeClass.SHORT:
++        uno_type = PrimitiveType(type_class, name, 'sal_Int16')
++    elif type_class == TypeClass.UNSIGNED_SHORT:
++        uno_type = PrimitiveType(type_class, name, 'sal_uInt16')
++    elif type_class == TypeClass.LONG:
++        uno_type = PrimitiveType(type_class, name, 'sal_Int32')
++    elif type_class == TypeClass.UNSIGNED_LONG:
++        uno_type = PrimitiveType(type_class, name, 'sal_uInt32')
++    elif type_class == TypeClass.HYPER:
++        uno_type = PrimitiveType(type_class, name, 'sal_Int64')
++    elif type_class == TypeClass.UNSIGNED_HYPER:
++        uno_type = PrimitiveType(type_class, name, 'sal_uInt64')
++    elif type_class == TypeClass.FLOAT:
++        uno_type = PrimitiveType(type_class, name, 'float')
++    elif type_class == TypeClass.DOUBLE:
++        uno_type = PrimitiveType(type_class, name, 'double')
++    elif type_class == TypeClass.STRING:
++        uno_type = PrimitiveType(type_class, name, 'rtl::OUString')
++    elif type_class == TypeClass.TYPE:
++        uno_type = PrimitiveType(type_class, name, 'com::sun::star::uno::Type')
++    elif type_class == TypeClass.ANY:
++        uno_type = PrimitiveType(type_class, name, 'com::sun::star::uno::Any')
++    elif type_class == TypeClass.ENUM:
++        uno_type = EnumType(val, full_val)
++    elif type_class == TypeClass.TYPEDEF:
++        pass
++    elif type_class == TypeClass.STRUCT:
++        uno_type = StructType(val, full_val)
++    elif type_class == TypeClass.UNION:
++        raise UnsupportedType('union')
++    elif type_class == TypeClass.EXCEPTION:
++        uno_type = CompoundType(val, full_val)
++    elif type_class == TypeClass.SEQUENCE:
++        uno_type = IndirectType(val, full_val)
++    elif type_class == TypeClass.ARRAY:
++        raise UnsupportedType('array')
++    elif type_class == TypeClass.INTERFACE:
++        uno_type = InterfaceType(val, full_val)
++    elif type_class == TypeClass.SERVICE:
++        raise UnsupportedType('service')
++    elif type_class == TypeClass.MODULE:
++        raise UnsupportedType('module')
++    elif type_class == TypeClass.INTERFACE_METHOD:
++        uno_type = InterfaceMethodType(val, full_val)
++    elif type_class == TypeClass.INTERFACE_ATTRIBUTE:
++        uno_type = InterfaceAttributeType(val, full_val)
++    elif type_class == TypeClass.UNKNOWN:
++        raise UnknownType(type)
++    elif type_class == TypeClass.PROPERTY:
++        pass
++    elif type_class == TypeClass.CONSTANT:
++        pass
++    elif type_class == TypeClass.CONSTANTS:
++        pass
++    elif type_class == TypeClass.SINGLETON:
++        pass
++    else:
++        raise UnknownType(type)
++
++    assert uno_type
++    return uno_type
++
++def uno_cast(type, val):
++    '''Casts val or pointer to UNO type represented by type'''
++    if val.type.code == gdb.TYPE_CODE_PTR:
++        return val.cast(type.type().pointer())
++    else:
++        return val.cast(type.type())
++
++class VoidType(Type):
++
++    def __init__(self):
++        super(VoidType, self).__init__(TypeClass.VOID, "void")
++        self.typename = "void"
++
++class PrimitiveType(Type):
++
++    def __init__(self, typeclass, typename_uno, typename_cpp):
++        super(PrimitiveType, self).__init__(typeclass, typename_uno)
++        self.typename = str(typename_cpp)
++
++class CompoundType(Type):
++
++    def __init__(self, type, full_type):
++        super(CompoundType, self).__init__(type['eTypeClass'], type['pTypeName'].dereference())
++        self.typename = self.uno2cpp(self.tag)
++        self._type = full_type
++
++    class _iterator(object):
++
++        def __init__(self, count, types, names):
++            self.count = count
++            self.members = members
++            self.names = names
++            self.pos = 0
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            assert self.pos >= 0 and self.pos <= self.count
++            if self.pos == self.count:
++                raise StopIteration
++
++            pmember = self.members[self.pos]
++            assert pmember
++            pname = self.names[self.i]
++            assert pname
++            self.pos = self.pos + 1
++            member = make_uno_type(pmember.dereference())
++            assert member
++            name = str(pname.dereference())
++            return (name, member)
++
++    def attributes(self):
++        return _iterator(self._type['nMembers'], self._type['ppTypeRefs'],
++                self._type['ppMemberNames'])
++
++class StructType(CompoundType):
++
++    def __init__(self, type, full_type):
++        full_type = full_type.cast(gdb.lookup_type('_typelib_StructTypeDescription'))
++        super(StructType, self).__init__(type, full_type['aBase'])
++
++class IndirectType(Type):
++
++    def __init__(self, type, full_type):
++        super(IndirectType, self).__init__(type['eTypeClass'], type['pTypeName'].dereference())
++        full_type = full_type.cast(gdb.lookup_type('_typelib_IndirectTypeDescription'))
++        pelem = full_type['pType']
++        assert pelem
++        self.element = make_uno_type(pelem.dereference())
++        assert self.element
++        self.typename = TemplateType('com::sun::star::uno::Sequence', self.element.typename)
++
++class EnumType(Type):
++
++    def __init__(self, type, full_type):
++        super(EnumType, self).__init__(TypeClass.ENUM, type['pTypeName'].dereference())
++        self.typename = self.uno2cpp(self.tag)
++        self._type = full_type.cast(gdb.lookup_type('_typelib_EnumTypeDescription'))
++
++    class _iterator(object):
++
++        def __init__(self, count, values, names):
++            self.count = count
++            self.values = values
++            self.names = names
++            self.pos = 0
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            assert self.pos >= 0 and self.pos <= self.count
++            if self.pos == self.count:
++                raise StopIteration
++
++            pvalue = self.values[self.pos]
++            assert pvalue
++            pname = self.names[self.pos]
++            assert pname
++            self.pos = self.pos + 1
++            val = int(pvalue.dereference())
++            name = str(pname.dereference())
++            return (name, val)
++
++    def values(self):
++        return _iterator(self._type['nEnumValues'],
++                self._type['ppEnumNames'], self._type['pEnumValues'])
++
++    def default_value(self):
++        return self._type['nDefaultEnumValue']
++
++class InterfaceMemberType(Type):
++
++    def __init__(self, type, full_type):
++        super(InterfaceMemberType, self).__init__(type['eTypeClass'], type['pTypeName'].dereference())
++        (interface, delim, member) = self.tag.partition('::')
++        self.typename = self.uno2cpp(interface) + '::*' + member
++        full_type = full_type.cast(gdb.lookup_type('_typelib_InterfaceMemberTypeDescription'))
++        self.position = full_type['nPosition']
++        pname = full_type['pMemberName']
++        assert pname
++        self.name = pname.dereference()
++
++class InterfaceMethodType(InterfaceMemberType):
++
++    def __init__(self, type, full_type):
++        full_type = full_type.cast(gdb.lookup_type('_typelib_InterfaceMethodTypeDescription'))
++        super(InterfaceMethodType, self).__init__(type, full_type['aBase'])
++        pret = full_type['pReturnTypeRef']
++        assert pret
++        self.return_type = make_uno_type(pret.dereference())
++        assert self.return_type
++        self.oneway = full_type['bOneWay']
++        self._type = full_type
++
++    class _iterator(object):
++
++        def __init__(self, count, values):
++            self.count = count
++            self.values = values
++            self.pos = 0
++            assert values
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            assert self.pos >= 0 and self.pos <= self.count
++            if self.pos == self.count:
++                raise StopIteration
++
++            val = self.values[self.pos]
++            self.pos = self.pos + 1
++            return val
++
++    class parameter(tuple):
++
++        def __init__(self, type):
++            self.__init_tuple(type)
++            self.input = type['bIn']
++            self.output = type['bOut']
++
++        def _init_tuple(self, type):
++            pname = self['pName']
++            assert pname
++            ptype = self['pTypeRef']
++            assert ptype
++            name = str(pname.dereference())
++            type = make_uno_type(ptype.dereference())
++            assert type
++            super(parameter, self).__init__(name, type)
++
++    def parameters(self):
++        for param in _iterator(self._type['nParams'], self._type['pParams']):
++            yield parameter(param)
++
++    def exceptions(self):
++        def make_exception(self, pex):
++            assert pex
++            ex = make_uno_type(pex.dereference())
++            assert ex
++            return ex
++
++        for ex in _iterator(
++                self._type['nExceptions'], self._type['ppExceptions']):
++            yield make_exception(ex)
++
++class InterfaceAttributeType(InterfaceMemberType):
++
++    def __init__(self, type, full_type):
++        full_type = full_type.cast(gdb.lookup_type('_typelib_InterfaceAttributeTypeDescription'))
++        super(InterfaceAttributeType, self).__init__(type, full_type['aBase'])
++        self.readonly = full_type['bReadOnly']
++        ptype = full_type['pAttributeTypeRef']
++        assert ptype
++        self.type = make_uno_type(ptype.dereference())
++        assert self.type
++
++class MembersNotInitialized(Exception):
++    '''Represents exception raised when interface type' members haven't
++        been initialized(i.e. just level 1 initialization has been
++        performed)'''
++    pass
++
++class InterfaceType(Type):
++
++    def __init__(self, type, full_type):
++        super(InterfaceType, self).__init__(TypeClass.INTERFACE, type['pTypeName'].dereference())
++        assert int(type['eTypeClass']) == TypeClass.INTERFACE
++        self.typename = self.uno2cpp(self.tag)
++        full_type = full_type.cast(gdb.lookup_type('_typelib_InterfaceTypeDescription'))
++        self.uik = full_type['aUik']
++        self._type = full_type
++
++    class _iterator(object):
++
++        def __init__(self, count, values):
++            assert values
++            self.count = count
++            self.values = values
++            self.pos = 0
++
++        def __iter__(self):
++            return self
++
++        def next(self):
++            assert self.pos >= 0 and self.pos <= self.count
++            pvalue = self.values[self.pos]
++            assert pvalue
++            self.pos = self.pos + 1
++            uno = make_uno_type(pvalue.dereference())
++            assert uno
++            return uno
++
++    def members(self):
++        return __members(self._type['nMembers'], self._type['ppMembers'])
++
++    def all_members(self):
++        return __members(self._type['nAllMembers'], self._type['ppAllMembers'])
++
++    def __members(count, values):
++        if values == 0:
++            raise MembersNotInitialized
++        return _iterator(count, values)
++
++    def bases(self):
++        return _iterator(self._type['nBaseTypes'], self._type['ppBaseTypes'])
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+-- 
+1.7.6
+
+From 9c1e67838844b4826c5a47f03aa4b363c127a705 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Tue, 9 Aug 2011 10:35:19 +0200
+Subject: [PATCH 2/2] install gdb pretty printers
+
+---
+ Makefile.in                     |    4 ++-
+ solenv/bin/install-gdb-printers |   68 +++++++++++++++++++++++++++++++++++++++
+ solenv/gdb/autoload.template    |   42 ++++++++++++++++++++++++
+ 3 files changed, 113 insertions(+), 1 deletions(-)
+ create mode 100755 solenv/bin/install-gdb-printers
+ create mode 100644 solenv/gdb/autoload.template
+
+diff --git a/Makefile.in b/Makefile.in
+index 72ef758..6ea879e 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -30,7 +30,8 @@ install:
+ 	ooinstall "@INSTALLDIR@" && \
+ 	echo "" && \
+ 	echo "Installation finished, you can now execute:" && \
+-	echo "@INSTALLDIR@/program/soffice"
++	echo "@INSTALLDIR@/program/soffice" && \
++	install-gdb-printers -a "@INSTALLDIR@"
+ 
+ distro-pack-install: install
+ 	./bin/distro-install-clean-up
+@@ -46,6 +47,7 @@ dev-install:
+ dev-install:
+ 	@. ./*[Ee]nv.[Ss]et.sh && \
+         ooinstall -l @abs_builddir@/install && \
++	install-gdb-printers -a "$$SOLARVER/$$INPATH/installation/opt" -L && \
+         echo "" && \
+         echo "Developer installation finished, you can now execute:" && \
+         echo "@abs_builddir@/install/program/soffice"
+diff --git a/solenv/bin/install-gdb-printers b/solenv/bin/install-gdb-printers
+new file mode 100755
+index 0000000..719c280
+--- /dev/null
++++ b/solenv/bin/install-gdb-printers
+@@ -0,0 +1,68 @@
++#!/bin/bash
++
++GDBDIR="${SOLARENV}/gdb"
++
++die() {
++    echo "$1" >&2
++    exit 1
++}
++
++make_autoload() {
++    local dir="${DESTDIR}${autoloaddir}/$2"
++    local gdbfile="${dir}/$3-gdb.py"
++
++    if ${create}; then
++        mkdir -p "${dir}" || die "cannot create dir '${dir}'"
++    elif ${follow}; then
++        gdbfile="$(readlink -f "${dir}/$3")-gdb.py"
++    fi
++    sed -e "s!%PYTHONDIR%!${pythondir}!" -e "s!%MODULE%!libreoffice.$1!" \
++        "${GDBDIR}/autoload.template" > "${gdbfile}"
++}
++
++# dir where the autoloaders will be placed
++autoloaddir=
++# dir where the pretty printers will be placed
++pythondir="${GDBDIR}"
++# Create autoload dir if it does not exist. This only makes sense when
++# installing into system gdb dir, so $autoloaddir must be absolute path.
++create=false
++# Follow links when looking up the path for the autoload file. This only
++# makes sense for dev-install.
++follow=false
++
++#  b defghijklmno qrstuvwxyzABCDEFGHIJK MNOPQRSTUVWXYZ0123456789
++while getopts :a:cp:L opt; do
++    case ${opt} in
++        a) autoloaddir="${OPTARG}" ;;
++        c) create=true ;;
++        p) pythondir="${OPTARG}" ;;
++        L) follow=true ;;
++        *) die "unknown option ${OPTARG}" ;;
++    esac
++done
++
++${create} && ${follow} && die "-c and -L cannot be used together"
++if [[ -n ${DESTDIR} ]]; then
++    [[ ${autoloaddir:0:1} = / ]] || die 'the arg to -a must be an absolute path'
++    [[ ${pythondir:0:1} = / ]] || die 'the arg to -p must be an absolute path'
++fi
++if ${create}; then
++    [[ ${autoloaddir:0:1} = / ]] || die 'the arg to -a must be an absolute path'
++else
++    [[ ! -d ${DESTDIR}${autoloaddir} ]] && die "directory '${DESTDIR}${autoloaddir}' does not exist"
++fi
++[[ ! -d ${GDBDIR} ]] && die "directory '${GDBDIR}' does not exist"
++
++if [[ ${DESTDIR}${pythondir} != ${GDBDIR} ]]; then
++    mkdir -p "${DESTDIR}${pythondir}" || die "cannot create dir '${DESTDIR}${pythondir}'"
++    cp -r "${GDBDIR}/libreoffice" "${DESTDIR}${pythondir}"
++fi
++
++make_autoload cppu ure/lib libuno_cppu.so.3
++make_autoload sal ure/lib libuno_sal.so.3
++make_autoload svl basis3.4/program libsvllo.so
++make_autoload sw basis3.4/program libswlo.so
++make_autoload tl basis3.4/program libtllo.so
++
++# vim:set shiftwidth=4 softtabstop=4 expandtab:
+diff --git a/solenv/gdb/autoload.template b/solenv/gdb/autoload.template
+new file mode 100644
+index 0000000..3351606
+--- /dev/null
++++ b/solenv/gdb/autoload.template
+@@ -0,0 +1,42 @@
++# Version: MPL 1.1 / GPLv3+ / LGPLv3+
++#
++# The contents of this file are subject to the Mozilla Public License Version
++# 1.1 (the "License"); you may not use this file except in compliance with
++# the License or as specified alternatively below. You may obtain a copy of
++# the License at http://www.mozilla.org/MPL/
++#
++# Software distributed under the License is distributed on an "AS IS" basis,
++# WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License
++# for the specific language governing rights and limitations under the
++# License.
++#
++# The Initial Developer of the Original Code is
++#       David Tardon, Red Hat Inc. <dtardon@redhat.com>
++# Portions created by the Initial Developer are Copyright (C) 2010 the
++# Initial Developer. All Rights Reserved.
++#
++# Major Contributor(s):
++#
++# For minor contributions see the git repository.
++#
++# Alternatively, the contents of this file may be used under the terms of
++# either the GNU General Public License Version 3 or later (the "GPLv3+"), or
++# the GNU Lesser General Public License Version 3 or later (the "LGPLv3+"),
++# in which case the provisions of the GPLv3+ or the LGPLv3+ are applicable
++# instead of those above.
++
++import os.path
++import sys
++
++import gdb
++
++pythondir = os.path.normpath('%PYTHONDIR%')
++
++if gdb.current_objfile():
++    if pythondir not in sys.path:
++        sys.path.insert(0, pythondir)
++
++from %MODULE% import register_pretty_printers
++register_pretty_printers(gdb.current_objfile())
++
++# vim:set filetype=python shiftwidth=4 softtabstop=4 expandtab:
+-- 
+1.7.6
+

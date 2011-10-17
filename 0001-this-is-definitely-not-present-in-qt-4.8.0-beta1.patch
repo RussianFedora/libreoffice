@@ -1,0 +1,25 @@
+From 7de616ff995c687e820e08c63350b908f45cdf85 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Fri, 22 Jul 2011 08:04:07 +0200
+Subject: [PATCH] this is definitely not present in Qt 4.8.0 beta1
+
+---
+ vcl/unx/kde4/KDEXLib.cxx |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/vcl/unx/kde4/KDEXLib.cxx b/vcl/unx/kde4/KDEXLib.cxx
+index 73021f4..357d1dc 100644
+--- a/vcl/unx/kde4/KDEXLib.cxx
++++ b/vcl/unx/kde4/KDEXLib.cxx
+@@ -57,7 +57,7 @@
+ 
+ #include <stdio.h>
+ 
+-#if QT_VERSION >= QT_VERSION_CHECK( 4, 8, 0 )
++#if QT_VERSION >= QT_VERSION_CHECK( 4, 8, 1 )
+ #define QT_UNIX_EVENT_LOOP_SUPPORT
+ #ifdef KDE_HAVE_GLIB
+ #define GLIB_EVENT_LOOP_SUPPORT
+-- 
+1.7.6
+

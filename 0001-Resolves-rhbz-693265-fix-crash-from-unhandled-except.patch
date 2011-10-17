@@ -1,0 +1,65 @@
+From 0da2906aa147050c3e99846d5908a60b99df69ba Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Tue, 2 Aug 2011 16:56:30 +0100
+Subject: [PATCH] Resolves: rhbz#693265 fix crash from unhandled exception
+
+---
+ vcl/source/gdi/impgraph.cxx |   28 ++++++++++++++++++++++++----
+ 1 files changed, 24 insertions(+), 4 deletions(-)
+
+diff --git a/vcl/source/gdi/impgraph.cxx b/vcl/source/gdi/impgraph.cxx
+index 3b6d9a4..6fdb163 100644
+--- a/vcl/source/gdi/impgraph.cxx
++++ b/vcl/source/gdi/impgraph.cxx
+@@ -1077,7 +1077,14 @@ sal_Bool ImpGraphic::ImplReadEmbedded( SvStream& rIStm, sal_Bool bSwap )
+ 
+                 if( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ).getLength() )
+                 {
+-                    SvStream* pOStm = ::utl::UcbStreamHelper::CreateStream( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ), STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
++                    SvStream* pOStm = NULL;
++                    try
++                    {
++                        pOStm = ::utl::UcbStreamHelper::CreateStream( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ), STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
++                    }
++                    catch( const ::com::sun::star::uno::Exception& )
++                    {
++                    }
+ 
+                     if( pOStm )
+                     {
+@@ -1282,8 +1289,14 @@ sal_Bool ImpGraphic::ImplSwapOut()
+ 
+             if( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ).getLength() )
+             {
+-                SvStream* pOStm = ::utl::UcbStreamHelper::CreateStream( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ), STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
+-
++                SvStream* pOStm = NULL;
++                try
++                {
++                    pOStm = ::utl::UcbStreamHelper::CreateStream( aTmpURL.GetMainURL( INetURLObject::NO_DECODE ), STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
++                }
++                catch( const ::com::sun::star::uno::Exception& )
++                {
++                }
+                 if( pOStm )
+                 {
+                     pOStm->SetVersion( SOFFICE_FILEFORMAT_50 );
+@@ -1382,7 +1395,14 @@ sal_Bool ImpGraphic::ImplSwapIn()
+ 
+         if( aSwapURL.Len() )
+         {
+-            SvStream* pIStm = ::utl::UcbStreamHelper::CreateStream( aSwapURL, STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
++            SvStream* pIStm = NULL;
++            try
++            {
++                pIStm = ::utl::UcbStreamHelper::CreateStream( aSwapURL, STREAM_READWRITE | STREAM_SHARE_DENYWRITE );
++            }
++            catch( const ::com::sun::star::uno::Exception& )
++            {
++            }
+ 
+             if( pIStm )
+             {
+-- 
+1.7.6
+

@@ -1,0 +1,25 @@
+--- /tmp/configure.in	2011-04-12 13:22:35.691633964 +0100
++++ configure.in	2011-04-12 13:29:44.603368227 +0100
+@@ -6822,11 +6822,11 @@
+    qt_libdirs="$QT4LIB /usr/lib $x_libraries"
+ 
+    kde_incdirs="/usr/include $x_includes"
+-   kde_libdirs="/usr/lib $x_libraries"
++   kde_libdirs="/usr/lib /usr/lib/kde4 /usr/lib/kde4/devel $x_libraries"
+ 
+    if test "$host_cpu" = "x86_64" ; then
+       qt_libdirs="$qt_libdirs /usr/lib64/qt4 /usr/lib64/qt /usr/lib64"
+-      kde_libdirs="$kde_libdirs /usr/lib64 /usr/lib64/kde4"
++      kde_libdirs="$kde_libdirs /usr/lib64 /usr/lib64/kde4 /usr/lib64/kde4/devel"
+    fi
+ 
+    if test -n "$QTDIR" ; then
+@@ -6855,7 +6855,7 @@
+       fi
+    fi
+    if test -n "$KDE4DIR" ; then
+-      kde_incdirs="$KDE4DIR/include $kde_incdirs"
++      kde_incdirs="$KDE4DIR/include $KDE4DIR/include/kde4 $kde_incdirs"
+       if test "$host_cpu" != "x86_64" ; then
+          kde_libdirs="$KDE4DIR/lib $kde_libdirs"
+       else
