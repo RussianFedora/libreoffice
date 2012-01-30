@@ -1,0 +1,30 @@
+From 39cbce553da1834f78b77f48b2f1be9578d6cc05 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Tue, 13 Dec 2011 21:01:28 +0000
+Subject: [PATCH] Resolves: rhbz#761009 IFSD_Equal is asymmetrical
+
+---
+ vcl/generic/glyphs/glyphcache.cxx |    6 ++++--
+ 1 files changed, 4 insertions(+), 2 deletions(-)
+
+diff --git a/vcl/generic/glyphs/glyphcache.cxx b/vcl/generic/glyphs/glyphcache.cxx
+index 89696d1..c524c08 100644
+--- a/vcl/source/glyphs/glyphcache.cxx
++++ b/vcl/source/glyphs/glyphcache.cxx
+@@ -148,9 +148,11 @@ bool GlyphCache::IFSD_Equal::operator()( const FontSelectPattern& rA, const Font
+     // NOTE: ignoring meFamily deliberately
+ 
+     // compare with the requested width, allow default width
+-    if( (rA.mnWidth != rB.mnWidth)
+-    && ((rA.mnHeight != rB.mnWidth) || (rA.mnWidth != 0)) )
++    int nAWidth = rA.mnWidth != 0 ? rA.mnWidth : rA.mnHeight;
++    int nBWidth = rB.mnWidth != 0 ? rB.mnWidth : rB.mnHeight;
++    if( nAWidth != nBWidth )
+         return false;
++
+ #ifdef ENABLE_GRAPHITE
+    if (rA.meLanguage != rB.meLanguage)
+         return false;
+-- 
+1.7.6.4
+

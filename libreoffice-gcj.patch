@@ -1,0 +1,21 @@
+--- a/scp2/source/ooo/profileitem_ooo.scp	2011-11-02 09:25:43.058473566 +0000
++++ b/scp2/source/ooo/profileitem_ooo.scp	2011-11-02 09:27:00.110473381 +0000
+@@ -383,14 +383,15 @@
+     Section = "Bootstrap";
+     Key = "URE_MORE_JAVA_CLASSPATH_URLS";
+     Value = "";
++    ValueList1 = "$ORIGIN/../ure-link/lib";
+ #ifdef SYSTEM_BSH
+-    ValueList1 = BSH_JAR;
++    ValueList2 = BSH_JAR;
+ #endif
+ #ifdef SYSTEM_HSQLDB
+-    ValueList2 = HSQLDB_JAR;
++    ValueList3 = HSQLDB_JAR;
+ #endif
+ #ifdef SYSTEM_SAXON
+-    ValueList3 = SAXON_JAR;
++    ValueList4 = SAXON_JAR;
+ #endif
+ End
+ 

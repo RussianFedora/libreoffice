@@ -1,0 +1,26 @@
+From a07e8231a5cd3e12f7120486098479ab6ae6bcc2 Mon Sep 17 00:00:00 2001
+From: Michael Meeks <michael.meeks@suse.com>
+Date: Thu, 20 Oct 2011 21:49:40 +0100
+Subject: [PATCH] gtk3: fix cairo canvas crash for non X (or svp) backend
+
+---
+ canvas/source/cairo/cairo_xlib_cairo.cxx |    3 +++
+ 1 files changed, 3 insertions(+), 0 deletions(-)
+
+diff --git a/canvas/source/cairo/cairo_xlib_cairo.cxx b/canvas/source/cairo/cairo_xlib_cairo.cxx
+index a0569ab..8e9120d 100644
+--- a/canvas/source/cairo/cairo_xlib_cairo.cxx
++++ b/canvas/source/cairo/cairo_xlib_cairo.cxx
+@@ -55,6 +55,9 @@ namespace cairo
+             return false;
+ 
+         Display* pDisplay = (Display*)pOutDev->GetSystemGfxData().pDisplay;
++        if( !pDisplay )
++            return false;
++
+         int nDummy;
+         return XQueryExtension( pDisplay, "RENDER", &nDummy, &nDummy, &nDummy );
+     }
+-- 
+1.7.6.4
+

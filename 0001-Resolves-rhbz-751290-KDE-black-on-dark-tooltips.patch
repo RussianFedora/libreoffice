@@ -1,0 +1,60 @@
+From 7cd58dbe32e5421986216dd7c6b24a4bb0b9c1e5 Mon Sep 17 00:00:00 2001
+From: Luboš Luňák <l.lunak@suse.cz>
+Date: Tue, 18 Oct 2011 14:52:47 +0000
+Subject: style tooltips properly with KDE4 vclplug (fdo#40461)
+
+---
+(limited to 'vcl/unx/kde4')
+
+diff --git a/vcl/unx/kde4/KDESalFrame.cxx b/vcl/unx/kde4/KDESalFrame.cxx
+index 10e7350..4dd54e5 100644
+--- a/vcl/unx/kde4/KDESalFrame.cxx
++++ b/vcl/unx/kde4/KDESalFrame.cxx
+@@ -38,6 +38,8 @@
+ #include <kmainwindow.h>
+ #include <kapplication.h>
+ #include <ktoolbar.h>
++#include <qdebug.h>
++#include <qtooltip.h>
+ 
+ #undef Region
+ 
+@@ -239,11 +241,9 @@ void KDESalFrame::UpdateSettings( AllSettings& rSettings )
+     style.SetFieldTextColor( aText );
+     style.SetFieldRolloverTextColor( aText );
+     style.SetWindowTextColor( aText );
+-    style.SetHelpTextColor( aText );
+ 
+     // Base
+     style.SetFieldColor( aBase );
+-    style.SetHelpColor( aBase );
+     style.SetWindowColor( aBase );
+     style.SetActiveTabColor( aBase );
+ 
+@@ -268,11 +268,14 @@ void KDESalFrame::UpdateSettings( AllSettings& rSettings )
+     style.SetHighlightColor( aHigh );
+     style.SetHighlightTextColor( toColor(pal.color( QPalette::HighlightedText))  );
+ 
++    // Tooltip
++    style.SetHelpColor( toColor( QToolTip::palette().color( QPalette::Active, QPalette::ToolTipBase )));
++    style.SetHelpTextColor( toColor( QToolTip::palette().color( QPalette::Active, QPalette::ToolTipText )));
++
+     // Font
+     Font aFont = toFont( kapp->font(), rSettings.GetUILocale() );
+ 
+     style.SetAppFont( aFont );
+-    style.SetHelpFont( aFont );
+ 
+     style.SetMenuFont( aFont ); // will be changed according to pMenuBar
+     //style.SetToolFont( aFont ); //already set above
+@@ -291,6 +294,8 @@ void KDESalFrame::UpdateSettings( AllSettings& rSettings )
+     }
+     style.SetFloatTitleFont( aFont );
+ 
++    style.SetHelpFont( toFont( QToolTip::font(), rSettings.GetUILocale()));
++
+     int flash_time = QApplication::cursorFlashTime();
+     style.SetCursorBlinkTime( flash_time != 0 ? flash_time/2 : STYLE_CURSOR_NOBLINKTIME );
+ 
+--
+cgit v0.9.0.2-2-gbebe

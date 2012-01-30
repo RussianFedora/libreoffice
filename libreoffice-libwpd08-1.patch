@@ -1,0 +1,262 @@
+--- a/set_soenv.in	2011-08-15 19:34:27.000000000 +0100
++++ b/set_soenv.in	2011-09-29 10:15:05.920863766 +0100
+@@ -1972,12 +1972,6 @@
+ ToFile( "SYSTEM_LIBWPD",     "@SYSTEM_LIBWPD@",    "e" );
+ ToFile( "LIBWPD_CFLAGS",     "@LIBWPD_CFLAGS@",    "e" );
+ ToFile( "LIBWPD_LIBS",       "@LIBWPD_LIBS@",      "e" );
+-ToFile( "SYSTEM_LIBWPS",     "@SYSTEM_LIBWPS@",    "e" );
+-ToFile( "LIBWPS_CFLAGS",     "@LIBWPS_CFLAGS@",    "e" );
+-ToFile( "LIBWPS_LIBS",       "@LIBWPS_LIBS@",      "e" );
+-ToFile( "SYSTEM_LIBWPG",     "@SYSTEM_LIBWPG@",    "e" );
+-ToFile( "LIBWPG_CFLAGS",     "@LIBWPG_CFLAGS@",    "e" );
+-ToFile( "LIBWPG_LIBS",       "@LIBWPG_LIBS@",      "e" );
+ ToFile( "SYSTEM_CPPUNIT",    "@SYSTEM_CPPUNIT@",   "e" );
+ ToFile( "CPPUNIT_CFLAGS",    "@CPPUNIT_CFLAGS@",   "e" );
+ ToFile( "CPPUNIT_LIBS",      "@CPPUNIT_LIBS@",     "e" );
+--- a/configure.in	2011-09-29 11:12:20.342862974 +0100
++++ b/configure.in	2011-09-29 11:21:15.687862230 +0100
+@@ -709,16 +709,6 @@
+         [Use libwpd already on system.]),
+ ,)
+ 
+-AC_ARG_WITH(system-libwps,
+-    AS_HELP_STRING([--with-system-libwps],
+-        [Use libwps already on system.]),
+-,)
+-
+-AC_ARG_WITH(system-libwpg,
+-    AS_HELP_STRING([--with-system-libwpg],
+-        [Use libwpg already on system.]),
+-,)
+-
+ AC_ARG_WITH(system-libxml,
+     AS_HELP_STRING([--with-system-libxml],
+         [Use libxml already on system.]),
+@@ -4004,7 +3994,7 @@
+         test "$with_system_libwpd" != "no"; then
+     AC_MSG_RESULT([external])
+     SYSTEM_LIBWPD=YES
+-    PKG_CHECK_MODULES( LIBWPD, libwpd-0.9 libwpd-stream-0.9 )
++    PKG_CHECK_MODULES( LIBWPD, libwpd-0.8 libwpd-stream-0.8 )
+ else
+     AC_MSG_RESULT([internal])
+     SYSTEM_LIBWPD=NO
+@@ -4044,42 +4034,6 @@
+ AC_SUBST(FREETYPE_LIBS)
+ 
+ dnl ===================================================================
+-dnl Check for system libwps
+-dnl ===================================================================
+-AC_MSG_CHECKING([which libwps to use])
+-if test -n "$with_system_libwps" -o -n "$with_system_libs" && \
+-        test "$with_system_libwps" != "no"; then
+-    AC_MSG_RESULT([external])
+-    SYSTEM_LIBWPS=YES
+-    PKG_CHECK_MODULES( LIBWPS, libwps-0.2 )
+-else
+-    AC_MSG_RESULT([internal])
+-    SYSTEM_LIBWPS=NO
+-    BUILD_TYPE="$BUILD_TYPE LIBWPS"
+-fi
+-AC_SUBST(SYSTEM_LIBWPS)
+-AC_SUBST(LIBWPS_CFLAGS)
+-AC_SUBST(LIBWPS_LIBS)
+-
+-dnl ===================================================================
+-dnl Check for system libwpg
+-dnl ===================================================================
+-AC_MSG_CHECKING([which libwpg to use])
+-if test -n "$with_system_libwpg" -o -n "$with_system_libs" && \
+-        test "$with_system_libwpg" != "no"; then
+-    AC_MSG_RESULT([external])
+-    SYSTEM_LIBWPG=YES
+-    PKG_CHECK_MODULES( LIBWPG, libwpg-0.2 )
+-else
+-    AC_MSG_RESULT([internal])
+-    SYSTEM_LIBWPG=NO
+-    BUILD_TYPE="$BUILD_TYPE LIBWPG"
+-fi
+-AC_SUBST(SYSTEM_LIBWPG)
+-AC_SUBST(LIBWPG_CFLAGS)
+-AC_SUBST(LIBWPG_LIBS)
+-
+-dnl ===================================================================
+ dnl Check whether freetype2 supports emboldening
+ dnl ===================================================================
+ if test  "$test_freetype" = "yes"; then
+@@ -4356,22 +4310,6 @@
+           AC_CHECK_FILE($LUCENE_CORE_JAR, [],
+                [ AC_MSG_ERROR(lucene-analyzers.jar not found.)], [])
+         fi
+-        AC_MSG_CHECKING([whether lucene is version 2.x])
+-        export LUCENE_CORE_JAR
+-        if $PERL -e 'use Archive::Zip;
+-            my $file = "$ENV{'LUCENE_CORE_JAR'}";
+-            my $zip = Archive::Zip->new( $file );
+-            my $mf = $zip->contents ( "META-INF/MANIFEST.MF" );
+-            if ( $mf =~ m/Specification-Version: 2.*/ ) {
+-                exit 0;
+-            } else {
+-                exit 1;
+-            }'; then
+-            AC_MSG_RESULT([yes])
+-         else
+-            AC_MSG_ERROR([no, you need lucene 2])
+-         fi
+-
+ else
+     AC_MSG_RESULT([internal])
+     SYSTEM_LUCENE=NO
+@@ -5545,8 +5483,7 @@
+     test "$with_system_redland" != "no"; then
+     AC_MSG_RESULT([external])
+     SYSTEM_REDLAND=YES
+-   dnl versions before 1.0.8 write RDF/XML that is useless for ODF (@xml:base)
+-   PKG_CHECK_MODULES(REDLAND, redland >= 1.0.8)
++    PKG_CHECK_MODULES( REDLAND, redland )
+ else
+     AC_MSG_RESULT([internal])
+     BUILD_TYPE="$BUILD_TYPE REDLAND"
+diff --git a/writerperfect/util/makefile.mk b/writerperfect/util/makefile.mk
+index dca29e0..56bdfb2 100644
+--- a/writerperfect/util/makefile.mk
++++ b/writerperfect/util/makefile.mk
+@@ -13,23 +13,9 @@
+ LIBWPD=-lwpdlib
+ .ENDIF
+ 
+-.IF "$(SYSTEM_LIBWPS)" == "YES"
+-LIBWPS=$(LIBWPS_LIBS)
+-.ELSE
+-LIBWPS=-lwpslib
+-.ENDIF
+-
+-.IF "$(SYSTEM_LIBWPG)" == "YES"
+-LIBWPG=$(LIBWPG_LIBS)
+-.ELSE
+-LIBWPG=-lwpglib
+-.ENDIF
+-
+ .ELSE
+ 
+ LIBWPD=$(LIBPRE) wpdlib.lib
+-LIBWPS=$(LIBPRE) wpslib.lib
+-LIBWPG=$(LIBPRE) wpglib.lib
+ 
+ .ENDIF
+ 
+@@ -60,82 +46,12 @@
+ SHL1VERSIONMAP=$(SOLARENV)/src/component.map
+ DEF1NAME=$(SHL1TARGET)
+ 
+-
+-LIB2TARGET= $(SLB)$/msworks.lib
+-LIB2FILES= \
+-    $(SLB)$/stream.lib  \
+-    $(SLB)$/filter.lib  \
+-    $(SLB)$/wpsimp.lib
+-SHL2LIBS=$(LIB2TARGET)
+-SHL2STDLIBS+= \
+-    $(SVLLIB)	\
+-    $(SOTLIB) \
+-    $(SO2LIB) \
+-    $(SVTOOLLIB) \
+-    $(UNOTOOLSLIB) \
+-    $(TOOLSLIB) \
+-    $(COMPHELPERLIB) \
+-    $(UCBHELPERLIB) \
+-    $(CPPUHELPERLIB) \
+-    $(CPPULIB) \
+-    $(SALLIB) \
+-    $(XMLOFFLIB) \
+-    $(LIBWPS) \
+-    $(LIBWPG) \
+-    $(LIBWPD)
+-
+-SHL2TARGET = msworks$(DLLPOSTFIX)
+-SHL2IMPLIB = i$(SHL2TARGET)
+-SHL2LIBS = $(LIB2TARGET)
+-SHL2VERSIONMAP = $(SOLARENV)/src/component.map
+-DEF2NAME = $(SHL2TARGET)
+-
+-LIB3TARGET= $(SLB)$/wpgimport.lib
+-LIB3FILES= \
+-    $(SLB)$/stream.lib  \
+-    $(SLB)$/filter.lib  \
+-    $(SLB)$/wpgimp.lib
+-SHL3LIBS=$(LIB3TARGET)
+-SHL3STDLIBS+= \
+-    $(SVLLIB)	\
+-    $(SOTLIB) \
+-    $(SO2LIB) \
+-    $(SVTOOLLIB) \
+-    $(UNOTOOLSLIB) \
+-    $(TOOLSLIB) \
+-    $(COMPHELPERLIB) \
+-    $(UCBHELPERLIB) \
+-    $(CPPUHELPERLIB) \
+-    $(CPPULIB) \
+-    $(SALLIB) \
+-    $(XMLOFFLIB) \
+-    $(LIBWPG) \
+-    $(LIBWPD)
+-
+-SHL3TARGET = wpgimport$(DLLPOSTFIX)
+-SHL3IMPLIB = i$(SHL3TARGET)
+-SHL3LIBS = $(LIB3TARGET)
+-SHL3VERSIONMAP = $(SOLARENV)/src/component.map
+-DEF3NAME = $(SHL3TARGET)
+-
+ .INCLUDE :  target.mk
+ 
+-ALLTAR : $(MISC)/wpft.component $(MISC)/wpgfilter.component $(MISC)/msworksfilter.component
++ALLTAR : $(MISC)/wpft.component
+ 
+ $(MISC)/wpft.component .ERRREMOVE : $(SOLARENV)/bin/createcomponent.xslt \
+         wpft.component
+     $(XSLTPROC) --nonet --stringparam uri \
+         '$(COMPONENTPREFIX_BASIS_NATIVE)$(SHL1TARGETN:f)' -o $@ \
+         $(SOLARENV)/bin/createcomponent.xslt wpft.component
+-
+-$(MISC)/wpgfilter.component .ERRREMOVE : $(SOLARENV)/bin/createcomponent.xslt \
+-        wpgfilter.component
+-    $(XSLTPROC) --nonet --stringparam uri \
+-        '$(COMPONENTPREFIX_BASIS_NATIVE)$(SHL3TARGETN:f)' -o $@ \
+-        $(SOLARENV)/bin/createcomponent.xslt wpgfilter.component
+-
+-$(MISC)/msworksfilter.component .ERRREMOVE : $(SOLARENV)/bin/createcomponent.xslt \
+-        msworksfilter.component
+-    $(XSLTPROC) --nonet --stringparam uri \
+-        '$(COMPONENTPREFIX_BASIS_NATIVE)$(SHL2TARGETN:f)' -o $@ \
+-        $(SOLARENV)/bin/createcomponent.xslt msworksfilter.component
+--- a/writerperfect/prj/build.lst	2011-05-20 17:05:36.000000000 +0100
++++ b/writerperfect/prj/build.lst	2011-10-20 09:06:36.065483147 +0100
+@@ -1,8 +1,6 @@
+-wp      writerperfect : LIBWPG:libwpg LIBWPS:libwps LIBWPD:libwpd sot comphelper xmloff svtools sfx2 LIBXSLT:libxslt NULL
++wp      writerperfect : LIBWPD:libwpd sot comphelper xmloff svtools NULL
+ wp	writerperfect			usr1	-	all	wp_mkout NULL
+ wp	writerperfect\source\stream	nmake	-	all	wp_stream NULL
+ wp	writerperfect\source\filter	nmake	-	all	wp_filter NULL
+ wp	writerperfect\source\wpdimp	nmake	-	all	wp_wpdimp NULL
+-wp	writerperfect\source\wpsimp	nmake	-	all	wp_wpsimp NULL
+-wp  writerperfect\source\wpgimp nmake   -   all wp_wpgimp NULL
+-wp	writerperfect\util		nmake	-	all	wp_util wp_wpgimp wp_wpsimp wp_wpdimp wp_filter wp_stream NULL
++wp     writerperfect\util              nmake   -       all     wp_util wp_wpdimp wp_filter wp_stream NULL
+--- a/postprocess/packcomponents/makefile.mk	2011-10-20 11:04:07.518473380 +0100
++++ b/postprocess/packcomponents/makefile.mk	2011-10-20 11:06:51.434484830 +0100
+@@ -129,7 +129,6 @@
+     migrationoo3 \
+     mtfrenderer \
+     msfilter \
+-    msworksfilter \
+     mysql \
+     odbc \
+     odfflatxml \
+@@ -185,7 +184,6 @@
+     vcl \
+     vclcanvas \
+     wpft \
+-    wpgfilter \
+     writerfilter \
+     xcr \
+     xmlfa \
