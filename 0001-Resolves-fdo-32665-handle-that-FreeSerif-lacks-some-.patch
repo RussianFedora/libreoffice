@@ -1,0 +1,311 @@
+From 58b48f188bbfd9a3382460d6de63848eb3db416d Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Thu, 27 Oct 2011 12:24:11 +0100
+Subject: [PATCH] Resolves: fdo#32665 handle that FreeSerif lacks some glyphs
+ in bold/italic
+
+FreeSerif lacks glyphs in bold/italic variants that it has in the normal one. A
+lot of our glyph fallback infrastructure, especially the caches don't expect
+that a normal variant of a font with extra emboldening or extra font skew can
+be a fallback for a bold/italic variant of itself which exists, but doesn't
+have the missing glyphs that the normal one does.
+
+We really need to improve our glyph/font caching, but we can get 90% of the
+way there by excluding such cases from the caches.
+---
+ vcl/generic/fontmanager/fontconfig.cxx |   18 ++++++++-
+ vcl/generic/fontmanager/fontsubst.cxx  |    6 +++-
+ vcl/generic/glyphs/glyphcache.cxx      |    7 ++++
+ vcl/inc/outfont.hxx                    |   19 ++++++++++
+ vcl/inc/vcl/fontmanager.hxx            |    3 +-
+ vcl/source/gdi/outdev3.cxx             |   60 ++++++++++++++++++++++----------
+ 6 files changed, 90 insertions(+), 23 deletions(-)
+
+diff --git a/vcl/generic/fontmanager/fontconfig.cxx b/vcl/generic/fontmanager/fontconfig.cxx
+index be91349..a4f5f7f 100644
+--- a/vcl/unx/source/fontmanager/fontconfig.cxx
++++ b/vcl/unx/source/fontmanager/fontconfig.cxx
+@@ -68,6 +68,9 @@
+     #ifndef FC_EMBOLDEN
+         #define FC_EMBOLDEN "embolden"
+     #endif
++    #ifndef FC_MATRIX
++        #define FC_MATRIX "matrix"
++    #endif
+     #ifndef FC_FONTFORMAT
+         #define FC_FONTFORMAT "fontformat"
+     #endif
+@@ -145,6 +148,7 @@
+     FcResult		(*m_pFcPatternGetString)(const FcPattern*,const char*,int,FcChar8**);
+     FcResult		(*m_pFcPatternGetInteger)(const FcPattern*,const char*,int,int*);
+     FcResult		(*m_pFcPatternGetDouble)(const FcPattern*,const char*,int,double*);
++    FcResult		(*m_pFcPatternGetMatrix)(const FcPattern*,const char*,int,FcMatrix**);
+     FcResult		(*m_pFcPatternGetBool)(const FcPattern*,const char*,int,FcBool*);
+     void			(*m_pFcDefaultSubstitute)(FcPattern *);
+     FcPattern*		(*m_pFcFontSetMatch)(FcConfig*,FcFontSet**, int, FcPattern*,FcResult*);    
+@@ -255,6 +259,9 @@
+     FcResult FcPatternGetDouble( const FcPattern* pPattern, const char* object, int n, double* s )
+     { return m_pFcPatternGetDouble( pPattern, object, n, s ); }
+ 
++    FcResult FcPatternGetMatrix( const FcPattern* pPattern, const char* object, int n, FcMatrix** s )
++    { return m_pFcPatternGetMatrix( pPattern, object, n, s ); }
++
+     FcResult FcPatternGetBool( const FcPattern* pPattern, const char* object, int n, FcBool* s )
+     { return m_pFcPatternGetBool( pPattern, object, n, s ); }
+     FcBool FcConfigAppFontAddFile( FcConfig* pConfig, const FcChar8* pFileName )
+@@ -381,6 +388,8 @@
+         loadSymbol( "FcPatternGetInteger" );
+     m_pFcPatternGetDouble = (FcResult(*)(const FcPattern*,const char*,int,double*))
+         loadSymbol( "FcPatternGetDouble" );
++    m_pFcPatternGetMatrix = (FcResult(*)(const FcPattern*,const char*,int,FcMatrix**))
++        loadSymbol( "FcPatternGetMatrix" );
+     m_pFcPatternGetBool = (FcResult(*)(const FcPattern*,const char*,int,FcBool*))
+         loadSymbol( "FcPatternGetBool" );
+     m_pFcConfigAppFontAddFile = (FcBool(*)(FcConfig*, const FcChar8*))
+@@ -453,6 +462,7 @@
+             m_pFcPatternGetString			&&
+             m_pFcPatternGetInteger			&&
+             m_pFcPatternGetDouble			&&
++            m_pFcPatternGetMatrix			&&
+             m_pFcPatternGetBool				&&
+             m_pFcConfigAppFontAddFile				&&
+             m_pFcConfigAppFontAddDir				&&
+@@ -1260,7 +1270,7 @@
+ rtl::OUString PrintFontManager::Substitute(const rtl::OUString& rFontName,
+     rtl::OUString& rMissingCodes, const rtl::OString &rLangAttrib,
+     italic::type &rItalic, weight::type &rWeight,
+-    width::type &rWidth, pitch::type &rPitch) const
++    width::type &rWidth, pitch::type &rPitch, bool &rEmbolden, ItalicMatrix &rMatrix) const
+ {
+     rtl::OUString aName;
+     FontCfgWrapper& rWrapper = FontCfgWrapper::get();
+@@ -1353,6 +1363,17 @@
+                     rPitch = convertSpacing(val);
+                 if ( FcResultMatch == rWrapper.FcPatternGetInteger( pSet->fonts[0], FC_WIDTH, 0, &val))
+                     rWidth = convertWidth(val);
++                FcBool bEmbolden;
++                if (FcResultMatch == rWrapper.FcPatternGetBool(pSet->fonts[0], FC_EMBOLDEN, 0, &bEmbolden))
++                    rEmbolden = bEmbolden;
++                FcMatrix *pMatrix = 0;
++                if (FcResultMatch == rWrapper.FcPatternGetMatrix(pSet->fonts[0], FC_MATRIX, 0, &pMatrix))
++                {
++                    rMatrix.xx = pMatrix->xx;
++                    rMatrix.xy = pMatrix->xy;
++                    rMatrix.yx = pMatrix->yx;
++                    rMatrix.yy = pMatrix->yy;
++                }
+             }
+ 
+             // update rMissingCodes by removing resolved unicodes
+diff --git a/vcl/generic/fontmanager/fontsubst.cxx b/vcl/generic/fontmanager/fontsubst.cxx
+index 3bf2d07..2d187b1 100644
+--- a/vcl/unx/source/gdi/salgdi3.cxx
++++ b/vcl/unx/source/gdi/salgdi3.cxx
+@@ -1526,8 +1526,14 @@
+         }
+     }
+ 
++    bool bEmbolden = rFontSelData.mbEmbolden;
++    ItalicMatrix aMatrix = rFontSelData.maItalicMatrix;
++
+     const psp::PrintFontManager& rMgr = psp::PrintFontManager::get();
+-    aRet.maSearchName = rMgr.Substitute( rFontSelData.maTargetName, rMissingCodes, aLangAttrib, eItalic, eWeight, eWidth, ePitch);
++    aRet.maSearchName = rMgr.Substitute( rFontSelData.maTargetName, rMissingCodes, aLangAttrib, eItalic, eWeight, eWidth, ePitch, bEmbolden, aMatrix );
++
++    aRet.maItalicMatrix = aMatrix;
++    aRet.mbEmbolden  = bEmbolden;
+ 
+     switch (eItalic)
+     {
+diff --git a/vcl/generic/glyphs/glyphcache.cxx b/vcl/generic/glyphs/glyphcache.cxx
+index 5322b65..fa712bb 100644
+--- a/vcl/source/glyphs/glyphcache.cxx
++++ b/vcl/source/glyphs/glyphcache.cxx
+@@ -163,6 +163,13 @@ bool GlyphCache::IFSD_Equal::operator()( const ImplFontSelectData& rA, const Imp
+         != STRING_NOTFOUND) && rA.maTargetName != rB.maTargetName)
+         return false;
+ #endif
++
++    if (rA.mbEmbolden != rB.mbEmbolden)
++        return false;
++
++    if (rA.maItalicMatrix != rB.maItalicMatrix)
++        return false;
++
+     return true;
+ }
+ 
+diff --git a/vcl/inc/outfont.hxx b/vcl/inc/outfont.hxx
+index faf2b00..857d944 100644
+--- a/vcl/inc/vcl/outfont.hxx
++++ b/vcl/inc/vcl/outfont.hxx
+@@ -175,6 +191,9 @@ public: // TODO: change to private
+     bool                mbVertical;         // vertical mode of requested font
+     bool                mbNonAntialiased;   // true if antialiasing is disabled
+ 
++    bool                mbEmbolden;         // Force emboldening
++    ItalicMatrix        maItalicMatrix;     // Force matrix for slant
++
+     const ImplFontData* mpFontData;         // a matching ImplFontData object
+     ImplFontEntry*      mpFontEntry;        // pointer to the resulting FontCache entry
+ };
+diff --git a/vcl/inc/vcl/fontmanager.hxx b/vcl/inc/vcl/fontmanager.hxx
+index 0af5e14..4a110ad 100644
+--- a/vcl/inc/vcl/fontmanager.hxx
++++ b/vcl/inc/vcl/fontmanager.hxx
+@@ -36,6 +36,7 @@
+ 
+ #include "vcl/dllapi.h"
+ #include "vcl/helper.hxx"
++#include "vcl/vclenum.hxx"
+ 
+ #include "com/sun/star/lang/Locale.hpp"
+ 
+@@ -737,7 +738,7 @@
+ 
+     rtl::OUString Substitute( const rtl::OUString& rFontName, rtl::OUString& rMissingCodes,
+         const rtl::OString& rLangAttrib, italic::type& rItalic, weight::type& rWeight,
+-        width::type& rWidth, pitch::type& rPitch) const;
++        width::type& rWidth, pitch::type& rPitch, bool &rEmboldening, ItalicMatrix &rMatrix) const;
+     bool hasFontconfig() const { return m_bFontconfigSuccess; }
+ 
+     int FreeTypeCharIndex( void *pFace, sal_uInt32 aChar );
+diff --git a/vcl/source/gdi/outdev3.cxx b/vcl/source/gdi/outdev3.cxx
+index b0f59cd..3cc438c 100755
+--- a/vcl/source/gdi/outdev3.cxx
++++ b/vcl/source/gdi/outdev3.cxx
+@@ -865,9 +865,11 @@ bool ImplFontData::IsBetterMatch( const ImplFontSelectData& rFSD, FontMatchStatu
+ 
+     if( rFSD.meWeight != WEIGHT_DONTKNOW )
+     {
+-        // if not bold prefer light fonts to bold fonts
+-        int nReqWeight = (int)rFSD.meWeight;
+-        if ( rFSD.meWeight > WEIGHT_MEDIUM )
++        // if not bold or requiring emboldening prefer light fonts to bold fonts
++        FontWeight ePatternWeight = rFSD.mbEmbolden ? WEIGHT_NORMAL : rFSD.meWeight;
++
++        int nReqWeight = (int)ePatternWeight;
++        if ( ePatternWeight > WEIGHT_MEDIUM )
+             nReqWeight += 100;
+ 
+         int nGivenWeight = (int)meWeight;
+@@ -897,14 +899,17 @@ bool ImplFontData::IsBetterMatch( const ImplFontSelectData& rFSD, FontMatchStatu
+             nMatch += 150;
+     }
+ 
+-    if ( rFSD.meItalic == ITALIC_NONE )
++    // if requiring custom matrix to fake italic, prefer upright font
++    FontItalic ePatternItalic = rFSD.maItalicMatrix != ItalicMatrix() ? ITALIC_NONE : rFSD.meItalic;
++
++    if ( ePatternItalic == ITALIC_NONE )
+     {
+         if( meItalic == ITALIC_NONE )
+             nMatch += 900;
+     }
+     else
+     {
+-        if( rFSD.meItalic == meItalic )
++        if( ePatternItalic == meItalic )
+             nMatch += 900;
+         else if( meItalic != ITALIC_NONE )
+             nMatch += 600;
+@@ -1457,22 +1462,31 @@ ImplDevFontListData* ImplDevFontList::GetGlyphFallbackFont( ImplFontSelectData&
+             else
+                 rFontSelData.maSearchName = String();
+ 
+-            // cache the result even if there was no match
+-            for(;;)
+-            {
+-                 if( !rFontSelData.mpFontEntry->GetFallbackForUnicode( cChar, rFontSelData.GetWeight(), &rFontSelData.maSearchName ) )
+-                     rFontSelData.mpFontEntry->AddFallbackForUnicode( cChar, rFontSelData.GetWeight(), rFontSelData.maSearchName );
+-                 if( nStrIndex >= aOldMissingCodes.getLength() )
+-                     break;
+-                 cChar = aOldMissingCodes.iterateCodePoints( &nStrIndex );
+-            }
+-            if( rFontSelData.maSearchName.Len() != 0 )
++            //See fdo#32665 for an example. FreeSerif that has glyphs in normal
++            //font, but not in the italic or bold version
++            bool bSubSetOfFontRequiresPropertyFaking = rFontSelData.mbEmbolden || rFontSelData.maItalicMatrix != ItalicMatrix();
++
++            // cache the result even if there was no match, unless its from part of a font for which the properties need
++            // to be faked. We need to rework this cache to take into account that fontconfig can return different fonts
++            // for different input sizes, weights, etc. Basically the cache is way to naive
++            if (!bSubSetOfFontRequiresPropertyFaking)
+             {
+-                // remove cache entries that were still not resolved
+-                for( nStrIndex = 0; nStrIndex < rMissingCodes.getLength(); )
++                for(;;)
+                 {
+-                    cChar = rMissingCodes.iterateCodePoints( &nStrIndex );
+-                    rFontSelData.mpFontEntry->IgnoreFallbackForUnicode( cChar, rFontSelData.GetWeight(), rFontSelData.maSearchName );
++                     if( !rFontSelData.mpFontEntry->GetFallbackForUnicode( cChar, rFontSelData.GetWeight(), &rFontSelData.maSearchName ) )
++                         rFontSelData.mpFontEntry->AddFallbackForUnicode( cChar, rFontSelData.GetWeight(), rFontSelData.maSearchName );
++                     if( nStrIndex >= aOldMissingCodes.getLength() )
++                         break;
++                     cChar = aOldMissingCodes.iterateCodePoints( &nStrIndex );
++                }
++                if( rFontSelData.maSearchName.Len() != 0 )
++                {
++                    // remove cache entries that were still not resolved
++                    for( nStrIndex = 0; nStrIndex < rMissingCodes.getLength(); )
++                    {
++                        cChar = rMissingCodes.iterateCodePoints( &nStrIndex );
++                        rFontSelData.mpFontEntry->IgnoreFallbackForUnicode( cChar, rFontSelData.GetWeight(), rFontSelData.maSearchName );
++                    }
+                 }
+             }
+         }
+@@ -2180,6 +2194,7 @@ ImplFontSelectData::ImplFontSelectData( const Font& rFont,
+     meLanguage( rFont.GetLanguage() ),
+     mbVertical( rFont.IsVertical() ),
+     mbNonAntialiased( false ),
++    mbEmbolden( false ),
+     mpFontData( NULL ),
+     mpFontEntry( NULL )
+ {
+@@ -2215,6 +2230,7 @@ ImplFontSelectData::ImplFontSelectData( const ImplFontData& rFontData,
+     meLanguage( 0 ),
+     mbVertical( bVertical ),
+     mbNonAntialiased( false ),
++    mbEmbolden( false ),
+     mpFontData( &rFontData ),
+     mpFontEntry( NULL )
+ {
+@@ -2297,6 +2313,12 @@ bool ImplFontCache::IFSD_Equal::operator()(const ImplFontSelectData& rA, const I
+         return false;
+ #endif
+ 
++    if (rA.mbEmbolden != rB.mbEmbolden)
++        return false;
++
++    if (rA.maItalicMatrix != rB.maItalicMatrix)
++        return false;
++
+     return true;
+ }
+
+--- a/vcl/inc/vcl/vclenum.hxx	2011-10-27 15:10:10.402317337 +0100
++++ b/vcl/inc/vcl/vclenum.hxx	2011-10-27 15:10:29.561528762 +0100
+@@ -326,6 +326,22 @@
+ 
+ #endif
+ 
++struct ItalicMatrix
++{
++    double xx, xy, yx, yy;
++    ItalicMatrix() : xx(1), xy(0), yx(0), yy(1) {}
++};
++
++inline bool operator ==(const ItalicMatrix& a, const ItalicMatrix& b)
++{
++    return a.xx == b.xx && a.xy == b.xy && a.yx == b.yx && a.yy == b.yy;
++}
++
++inline bool operator !=(const ItalicMatrix& a, const ItalicMatrix& b)
++{
++    return a.xx != b.xx || a.xy != b.xy || a.yx != b.yx || a.yy != b.yy;
++}
++
+ #endif	// _VCL_VCLENUM_HXX
+ 
+ /* vim:set shiftwidth=4 softtabstop=4 expandtab: */

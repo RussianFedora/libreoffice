@@ -1,0 +1,68 @@
+From 549e54fb2f8113502743c443d6deadfe648dede1 Mon Sep 17 00:00:00 2001
+From: Hanno Meyer-Thurow <h.mth@web.de>
+Date: Tue, 13 Sep 2011 13:23:28 +0100
+Subject: [PATCH] add Oracle Java 1.7.0 recognition
+
+---
+ .../OpenOfficeorg/javavendors_linux.xml            |    4 ++++
+ jvmfwk/plugins/sunmajor/javaenvsetup/javaldx.cxx   |    2 ++
+ jvmfwk/plugins/sunmajor/pluginlib/vendorlist.cxx   |    1 +
+ 3 files changed, 7 insertions(+), 0 deletions(-)
+
+diff --git a/jvmfwk/distributions/OpenOfficeorg/javavendors_linux.xml b/jvmfwk/distributions/OpenOfficeorg/javavendors_linux.xml
+index ed329e5..489511f 100644
+--- a/jvmfwk/distributions/OpenOfficeorg/javavendors_linux.xml
++++ b/jvmfwk/distributions/OpenOfficeorg/javavendors_linux.xml
+@@ -9,6 +9,9 @@
+   <vendor name="Sun Microsystems Inc.">
+     <minVersion>1.5.0</minVersion>
+   </vendor>
++  <vendor name="Oracle Corporation">
++    <minVersion>1.7.0</minVersion>
++  </vendor>
+   <vendor name="IBM Corporation">
+     <minVersion>1.5.0</minVersion>
+   </vendor>
+@@ -25,6 +28,7 @@
+ 
+  <plugins>
+   <library vendor="Sun Microsystems Inc.">vnd.sun.star.expand:$URE_INTERNAL_LIB_DIR/sunjavaplugin.so</library>
++  <library vendor="Oracle Corporation">vnd.sun.star.expand:$URE_INTERNAL_LIB_DIR/sunjavaplugin.so</library>
+   <library vendor="IBM Corporation">vnd.sun.star.expand:$URE_INTERNAL_LIB_DIR/sunjavaplugin.so</library>
+   <library vendor="Blackdown Java-Linux Team">vnd.sun.star.expand:$URE_INTERNAL_LIB_DIR/sunjavaplugin.so</library>
+   <library vendor="Free Software Foundation, Inc.">vnd.sun.star.expand:$URE_INTERNAL_LIB_DIR/sunjavaplugin.so</library>
+diff --git a/jvmfwk/plugins/sunmajor/javaenvsetup/javaldx.cxx b/jvmfwk/plugins/sunmajor/javaenvsetup/javaldx.cxx
+index 8567d79..91ad4c6 100644
+--- a/jvmfwk/plugins/sunmajor/javaenvsetup/javaldx.cxx
++++ b/jvmfwk/plugins/sunmajor/javaenvsetup/javaldx.cxx
+@@ -112,6 +112,7 @@ SAL_IMPLEMENT_MAIN_WITH_ARGS(argc, argv)
+ 
+     //Only do something if the sunjavaplugin created this JavaInfo
+     rtl::OUString sVendor1(RTL_CONSTASCII_USTRINGPARAM("Sun Microsystems Inc."));
++    rtl::OUString sVendor9(RTL_CONSTASCII_USTRINGPARAM("Oracle Corporation"));
+     rtl::OUString sVendor2(RTL_CONSTASCII_USTRINGPARAM("IBM Corporation"));
+     rtl::OUString sVendor3(RTL_CONSTASCII_USTRINGPARAM("Blackdown Java-Linux Team"));
+     rtl::OUString sVendor4(RTL_CONSTASCII_USTRINGPARAM("Apple Inc."));
+@@ -121,6 +122,7 @@ SAL_IMPLEMENT_MAIN_WITH_ARGS(argc, argv)
+     rtl::OUString sVendor8(RTL_CONSTASCII_USTRINGPARAM("The FreeBSD Foundation"));
+     if ( ! (sVendor1.equals(pInfo->sVendor) == sal_True
+             || sVendor2.equals(pInfo->sVendor) == sal_True
++            || sVendor9.equals(pInfo->sVendor) == sal_True
+             || sVendor3.equals(pInfo->sVendor) == sal_True
+             || sVendor4.equals(pInfo->sVendor) == sal_True
+             || sVendor5.equals(pInfo->sVendor) == sal_True
+diff --git a/jvmfwk/plugins/sunmajor/pluginlib/vendorlist.cxx b/jvmfwk/plugins/sunmajor/pluginlib/vendorlist.cxx
+index f24b6ff..5e87002 100644
+--- a/jvmfwk/plugins/sunmajor/pluginlib/vendorlist.cxx
++++ b/jvmfwk/plugins/sunmajor/pluginlib/vendorlist.cxx
+@@ -52,6 +52,7 @@ namespace jfw_plugin
+  */
+ BEGIN_VENDOR_MAP()
+     VENDOR_MAP_ENTRY("Sun Microsystems Inc.", SunInfo)
++    VENDOR_MAP_ENTRY("Oracle Corporation", SunInfo)
+     VENDOR_MAP_ENTRY("IBM Corporation", OtherInfo)
+     VENDOR_MAP_ENTRY("Blackdown Java-Linux Team", OtherInfo)
+     VENDOR_MAP_ENTRY("Apple Inc.", OtherInfo)
+-- 
+1.7.6.4
+

@@ -1,0 +1,47 @@
+From 04c5a36ab8d514cfbe8e40f4493787b2ab392ab5 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Tue, 25 Oct 2011 13:49:51 +0100
+Subject: [PATCH] avoid using com.sun.org apis
+
+---
+ .../pentaho/output/OfficeDocumentReportTarget.java |   10 ++++++----
+ 1 files changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/reportbuilder/java/com/sun/star/report/pentaho/output/OfficeDocumentReportTarget.java b/reportbuilder/java/com/sun/star/report/pentaho/output/OfficeDocumentReportTarget.java
+index cdc8eae..ef99a15 100644
+--- a/reportbuilder/java/com/sun/star/report/pentaho/output/OfficeDocumentReportTarget.java
++++ b/reportbuilder/java/com/sun/star/report/pentaho/output/OfficeDocumentReportTarget.java
+@@ -41,7 +41,6 @@ import com.sun.star.report.pentaho.model.OfficeStyles;
+ import com.sun.star.report.pentaho.model.OfficeStylesCollection;
+ import com.sun.star.report.pentaho.styles.LengthCalculator;
+ import com.sun.star.report.pentaho.styles.StyleMapper;
+-import com.sun.org.apache.xerces.internal.parsers.DOMParser;
+ import java.util.logging.Level;
+ import java.util.logging.Logger;
+ import javax.xml.transform.OutputKeys;
+@@ -49,6 +48,8 @@ import javax.xml.transform.Transformer;
+ import javax.xml.transform.TransformerFactory;
+ import javax.xml.transform.dom.DOMSource;
+ import javax.xml.transform.stream.StreamResult;
++import javax.xml.parsers.DocumentBuilderFactory;
++import javax.xml.parsers.DocumentBuilder;
+ import org.w3c.dom.Document;
+ import org.w3c.dom.Node;
+ import org.w3c.dom.NodeList;
+@@ -1058,9 +1059,10 @@ public abstract class OfficeDocumentReportTarget extends AbstractReportTarget
+             try
+             {
+                 inputStream = getInputRepository().createInputStream("meta.xml");
+-                DOMParser dOMParser = new DOMParser();
+-                dOMParser.parse(new InputSource(inputStream));
+-                Document document = dOMParser.getDocument();
++                DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
++                DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
++                Document document = dBuilder.parse(new InputSource(inputStream));
++
+                 NodeList nl = document.getElementsByTagName("document-meta/meta/generator");
+                 Node node = document.getFirstChild().getFirstChild().getFirstChild().getFirstChild();
+                 String creator = node.getNodeValue();
+-- 
+1.7.6.4
+

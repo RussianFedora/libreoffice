@@ -1,0 +1,14 @@
+diff --git a/writerfilter/source/resourcemodel/makefile.mk b/writerfilter/source/resourcemodel/makefile.mk
+index 73e049f..2aba722 100644
+--- a/writerfilter/source/resourcemodel/makefile.mk
++++ b/writerfilter/source/resourcemodel/makefile.mk
+@@ -40,9 +40,6 @@ CDEFS+=-DWRITERFILTER_DLLIMPLEMENTATION
+ # --- Files --------------------------------------------------------
+ 
+ # work around gcc taking hours and/or OOM'ing on this file
+-NOOPTFILES= \
+-    $(SLO)$/qnametostr.obj
+-
+ SLOFILES= \
+     $(SLO)$/Fraction.obj \
+     $(SLO)$/LoggedResources.obj \
