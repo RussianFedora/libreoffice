@@ -18,11 +18,7 @@
 %define source_url http://download.documentfoundation.org/libreoffice/src/%{libo_version}
 
 %if %{langpacks}
-#%if %{defined rhel} && 0%{?rhel} < 7
-%define langpack_langs en-US af ar bg bn ca cs cy da de dz el es et eu fi fr ga gl gu he hi hr hu it ja ko lt mai ml mr ms nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh sk sl sr ss st sv ta te th tn tr ts uk ur ve xh zh-CN zh-TW zu
-#%else
-#%define langpack_langs en-US af ar as bg bn ca cs cy da de dz el es et eu fa fi fr ga gl gu he hi hr hu it ja ko kn lt lv mai ml mr nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh si sk sl sr ss st sv ta te th tn tr ts uk ve xh zh-CN zh-TW zu
-#%endif
+%define langpack_langs en-US af ar bg bn ca cs cy da de dz el es et eu fa fi fr ga gl gu he hi hr hu it ja ko kn lt lv mai ml nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh si sk sl sr ss st sv ta te th tn tr ts uk ve xh zh-CN zh-TW zu
 %define with_lang --with-lang="%{langpack_langs}"
 %else
 %define langpack_langs en-US
@@ -72,10 +68,8 @@ Source29:       http://hg.services.openoffice.org/binaries/18f577b374d60b3c760a3
 #backwards compatability.
 Source30:       http://hg.services.openoffice.org/binaries/17410483b5b5f267aa18b7e00b65e6e0-hsqldb_1_8_0.zip
 Source31:       http://download.go-oo.org/extern/b4cae0700aa1c2aef7eb7f345365e6f1-translate-toolkit-1.8.1.tar.bz2
-%if %{defined rhel} && 0%{?rhel} < 7
 Source32:       http://dev-www.libreoffice.org/src/0ff7d225d087793c8c2c680d77aac3e7-mdds_0.5.3.tar.bz2
 Source33:       http://hg.services.openoffice.org/binaries/067201ea8b126597670b5eff72e1f66c-mythes-1.2.0.tar.gz
-%endif
 BuildRequires:  zip, findutils, autoconf, flex, bison, icu, gperf, gcc-c++
 BuildRequires:  binutils, java-devel < 1:1.7.0, boost-devel, zlib-devel
 BuildRequires:  python-devel, expat-devel, libxml2-devel, libxslt-devel, bc
@@ -195,7 +189,6 @@ Requires(preun):  gtk2 >= 2.9.4
 Requires(postun): gtk2 >= 2.9.4
 Obsoletes: openoffice.org-core < 1:3.3.1
 Obsoletes: openoffice.org-brand < 1:3.3.1, broffice.org-brand < 1:3.3.1
-%if %{defined rhel} && 0%{?rhel} < 7
 Provides: openoffice.org-core = 1:3.3.0
 Provides: openoffice.org-brand = 1:3.3.0, broffice.org-brand = 1:3.3.0
 Obsoletes: openoffice.org-libs < 1.9.0
@@ -203,10 +196,8 @@ Obsoletes: openoffice.org-i18n < 1.9.0
 Obsoletes: openoffice.org-kde < 1.9.0
 Obsoletes: openoffice.org-langpack-eo < 1:2.0.0
 Obsoletes: openoffice.org2-core < 1:3.0.0
-%else
 Obsoletes: openoffice.org-langpack-ms < 1:3.3.1, libreoffice-langpack-ms < 1:3.3.99.1
 Obsoletes: openoffice.org-langpack-ur < 1:3.3.1, libreoffice-langpack-ur < 1:3.3.99.1
-%endif
 
 %description core
 The shared core libraries and support files for LibreOffice.
@@ -800,7 +791,6 @@ Rules for auto-correcting common %{langname} typing errors. \
 
 %langpack -l af -n Afrikaans -F -H -Y -A -o af_ZA -V -x af_ZA -S
 %langpack -l ar -n Arabic -F -H -O -X -S
-%langpack -l as -n Assamese -F -H -Y -o as_IN -x as_IN -S
 %langpack -l bg -n Bulgarian -F -H -Y -M -A -o bg_BG -V -x bg_BG -S
 %langpack -l bn -n Bengali -F -H -Y -O -v bn_IN -X -S
 %langpack -l ca -n Catalan -F -H -Y -M -o ca_ES -V -x ca_ES -S
@@ -838,10 +828,6 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l lv -n Latvian -F -H -Y -M -S
 %langpack -l mai -n Maithili -F -o mai_IN -S
 %langpack -l ml -n Malayalam -F -H -Y -o ml_IN -x ml_IN -S
-%langpack -l mr -n Marathi -F -H -Y -o mr_IN -x mr_IN -S
-%if %{defined rhel} && 0%{?rhel} < 7
-%langpack -l ms -n Malay -F -H -o ms_MY -V -x ms_MY -S
-%endif
 %langpack -l nb -n Bokmal -F -H -Y -M -o nb_NO -V -x nb_NO -S
 %langpack -l nl -n Dutch -F -H -Y -M -A -O -X -S
 %langpack -l nn -n Nynorsk -F -H -Y -M -o nn_NO -V -x nn_NO -S
@@ -872,9 +858,6 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l tr -n Turkish -F -A -o tr_TR -V -x tr_TR -S
 %langpack -l ts -n Tsonga -F -H -o ts_ZA -V -x ts_ZA -S
 %langpack -l uk -n Ukrainian -F -H -Y -M -O -S
-%if %{defined rhel} && 0%{?rhel} < 7
-%langpack -l ur -n Urdu -F -H -O -X -S
-%endif
 %langpack -l ve -n Venda -F -H -o ve_ZA -S
 %langpack -l xh -n Xhosa -F -H -o xh_ZA -S
 %define langpack_lang Simplified Chinese
