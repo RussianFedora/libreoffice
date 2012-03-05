@@ -1,4 +1,4 @@
-%define libo_version 3.5.1
+%define libo_version 3.5.2
 # rhbz#715152 state vendor
 %if 0%{?rhel}
 %define vendoroption --with-vendor="Red Hat, Inc."
@@ -41,10 +41,10 @@ Group:          Applications/Productivity
 URL:            http://www.documentfoundation.org/develop
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
 
-Source0:        %{source_url}/libreoffice-core-%{version}.tar.xz
-Source1:        %{source_url}/libreoffice-binfilter-%{version}.tar.xz
-Source2:        %{source_url}/libreoffice-help-%{version}.tar.xz
-Source3:        %{source_url}/libreoffice-translations-%{version}.tar.xz
+Source0:        http://dev-builds.libreoffice.org/pre-releases/src/libreoffice-core-%{version}.tar.xz
+Source1:        http://dev-builds.libreoffice.org/pre-releases/src/libreoffice-binfilter-%{version}.tar.xz
+Source2:        http://dev-builds.libreoffice.org/pre-releases/src/libreoffice-help-%{version}.tar.xz
+Source3:        http://dev-builds.libreoffice.org/pre-releases/src/libreoffice-translations-%{version}.tar.xz
 Source4:        http://dev-www.libreoffice.org/extern/185d60944ea767075d27247c3162b3bc-unowinreg.dll
 Source5:        redhat-langpacks.tar.gz
 Source6:        libreoffice-multiliblauncher.sh
@@ -73,7 +73,6 @@ Source25:       http://dev-www.libreoffice.org/src/9d283e02441d8cebdcd1e5d9df227
 Source26:       http://dev-www.libreoffice.org/src/c01351d7db2b205de755d58769288224-libwpd-0.9.4.tar.bz2
 Source27:       http://dev-www.libreoffice.org/src/34dd7951abbda99b7a75a09993a37965-libwps-0.2.4.tar.bz2
 Source28:       http://dev-www.libreoffice.org/src/ca66e26082cab8bb817185a116db809b-redland-1.0.8.tar.gz
-#Source29:       http://dev-www.libreoffice.org/src/bd30e9cf5523cdfc019b94f5e1d7fd19-cppunit-1.12.1.tar.gz
 %endif
 
 BuildRequires:  zip, findutils, autoconf, flex, bison, icu, gperf, gcc-c++
@@ -1072,7 +1071,6 @@ cp %{SOURCE25} ext_sources
 cp %{SOURCE26} ext_sources
 cp %{SOURCE27} ext_sources
 cp %{SOURCE28} ext_sources
-#cp %{SOURCE29} ext_sources
 %endif
 touch src.downloaded
 
@@ -2264,6 +2262,9 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 %endif
 
 %changelog
+* Mon Mar  5 2012 Arkady L. Shane <ashejn@russianfedora.ru> - 3.5.1.2-1
+- update to 3.5.1.2
+
 * Wed Feb 29 2012 Caolán McNamara <caolanm@redhat.com> - 3.5.1.1-2
 - Resolves: rhbz#788045 swriter --help doesn't show help
 - Resolves: rhbz#798667 missing .desktop icons
