@@ -1,8 +1,30 @@
-Index: ucbhelper/source/client/content.cxx
-===================================================================
---- ucbhelper/source/client/content.cxx	(revision 270567)
-+++ ucbhelper/source/client/content.cxx	(working copy)
-@@ -39,6 +39,7 @@
+From 7e3bdb601c02e60b772e64ec9d11c56881c9a643 Mon Sep 17 00:00:00 2001
+From: David Tardon <dtardon@redhat.com>
+Date: Thu, 1 Dec 2011 14:02:07 +0100
+Subject: [PATCH 1/2] #i101274 a directory on command line is silently ignored
+
+---
+ .../source/misc/stillreadwriteinteraction.cxx      |    1 +
+ ucbhelper/source/client/content.cxx                |   75 ++++++++++++++++++++
+ 2 files changed, 76 insertions(+), 0 deletions(-)
+
+diff --git a/comphelper/source/misc/stillreadwriteinteraction.cxx b/comphelper/source/misc/stillreadwriteinteraction.cxx
+index 124564d..506f31c 100644
+--- a/comphelper/source/misc/stillreadwriteinteraction.cxx
++++ b/comphelper/source/misc/stillreadwriteinteraction.cxx
+@@ -96,6 +96,7 @@ ucbhelper::InterceptedInteraction::EInterceptionState StillReadWriteInteraction:
+             bAbort = (
+                 (exIO.Code == css::ucb::IOErrorCode_ACCESS_DENIED     )
+                 || (exIO.Code == css::ucb::IOErrorCode_LOCKING_VIOLATION )
++				|| (exIO.Code == css::ucb::IOErrorCode_NO_FILE )
+                 || (exIO.Code == css::ucb::IOErrorCode_NOT_EXISTING )
+ #ifdef MACOSX
+                 // this is a workaround for MAC, on this platform if the file is locked
+diff --git a/ucbhelper/source/client/content.cxx b/ucbhelper/source/client/content.cxx
+index 676acd5..4a599c9 100644
+--- a/ucbhelper/source/client/content.cxx
++++ b/ucbhelper/source/client/content.cxx
+@@ -38,6 +38,7 @@
  #include <cppuhelper/weak.hxx>
  
  #include <cppuhelper/implbase1.hxx>
@@ -10,7 +32,7 @@ Index: ucbhelper/source/client/content.cxx
  #include <com/sun/star/ucb/ContentCreationError.hpp>
  #include <com/sun/star/ucb/XCommandEnvironment.hpp>
  #include <com/sun/star/ucb/XCommandInfo.hpp>
-@@ -48,6 +49,8 @@
+@@ -47,6 +48,8 @@
  #include <com/sun/star/ucb/ContentAction.hpp>
  #include <com/sun/star/ucb/OpenCommandArgument2.hpp>
  #include <com/sun/star/ucb/InsertCommandArgument.hpp>
@@ -19,7 +41,7 @@ Index: ucbhelper/source/client/content.cxx
  #include <com/sun/star/ucb/GlobalTransferCommandArgument.hpp>
  #include <com/sun/star/ucb/NameClash.hpp>
  #include <com/sun/star/ucb/OpenMode.hpp>
-@@ -65,6 +68,8 @@
+@@ -64,6 +67,8 @@
  #include <com/sun/star/sdbc/XRow.hpp>
  #include <com/sun/star/lang/IllegalArgumentException.hpp>
  #include <com/sun/star/beans/UnknownPropertyException.hpp>
@@ -28,7 +50,7 @@ Index: ucbhelper/source/client/content.cxx
  #include <ucbhelper/macros.hxx>
  #include <ucbhelper/content.hxx>
  #include <ucbhelper/contentbroker.hxx>
-@@ -72,6 +77,10 @@
+@@ -71,6 +76,10 @@
  #include <ucbhelper/activedatastreamer.hxx>
  #include <ucbhelper/interactionrequest.hxx>
  #include <ucbhelper/cancelcommandexecution.hxx>
@@ -39,7 +61,7 @@ Index: ucbhelper/source/client/content.cxx
  
  using namespace com::sun::star::container;
  using namespace com::sun::star::beans;
-@@ -375,6 +384,54 @@
+@@ -373,6 +382,54 @@ static Reference< XContent > getContent(
      return Reference< XContent >();
  }
  
@@ -94,7 +116,7 @@ Index: ucbhelper/source/client/content.cxx
  //=========================================================================
  //=========================================================================
  //
-@@ -1186,7 +1243,10 @@
+@@ -890,7 +947,10 @@ Reference< XInputStream > Content::openStream()
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -105,7 +127,7 @@ Index: ucbhelper/source/client/content.cxx
  
      Reference< XActiveDataSink > xSink = new ActiveDataSink;
  
-@@ -1211,7 +1271,10 @@
+@@ -915,7 +975,10 @@ Reference< XInputStream > Content::openStreamNoLock()
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -116,7 +138,7 @@ Index: ucbhelper/source/client/content.cxx
  
      Reference< XActiveDataSink > xSink = new ActiveDataSink;
  
-@@ -1236,7 +1299,10 @@
+@@ -940,7 +1003,10 @@ Reference< XStream > Content::openWriteableStream()
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -127,7 +149,7 @@ Index: ucbhelper/source/client/content.cxx
  
      Reference< XActiveDataStreamer > xStreamer = new ActiveDataStreamer;
  
-@@ -1261,7 +1327,10 @@
+@@ -965,7 +1031,10 @@ Reference< XStream > Content::openWriteableStreamNoLock()
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -138,7 +160,7 @@ Index: ucbhelper/source/client/content.cxx
  
      Reference< XActiveDataStreamer > xStreamer = new ActiveDataStreamer;
  
-@@ -1286,7 +1355,10 @@
+@@ -990,7 +1059,10 @@ sal_Bool Content::openStream( const Reference< XActiveDataSink >& rSink )
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -149,7 +171,7 @@ Index: ucbhelper/source/client/content.cxx
  
      OpenCommandArgument2 aArg;
      aArg.Mode       = OpenMode::DOCUMENT;
-@@ -1309,7 +1381,10 @@
+@@ -1013,7 +1085,10 @@ sal_Bool Content::openStream( const Reference< XOutputStream >& rStream )
      throw( CommandAbortedException, RuntimeException, Exception )
  {
      if ( !isDocument() )
@@ -160,15 +182,6 @@ Index: ucbhelper/source/client/content.cxx
  
      OpenCommandArgument2 aArg;
      aArg.Mode       = OpenMode::DOCUMENT;
-Index: comphelper/source/misc/mediadescriptor.cxx
-===================================================================
---- comphelper/source/misc/stillreadwriteinteraction.cxx	2010-07-06 15:32:02.000000000 +0100
-+++ comphelper/source/misc/stillreadwriteinteraction.cxx	2010-07-06 15:32:31.000000000 +0100
-@@ -103,6 +103,7 @@
- 			bAbort = (
- 				(exIO.Code == css::ucb::IOErrorCode_ACCESS_DENIED     )
- 				|| (exIO.Code == css::ucb::IOErrorCode_LOCKING_VIOLATION )
-+				|| (exIO.Code == css::ucb::IOErrorCode_NO_FILE )
- 				|| (exIO.Code == css::ucb::IOErrorCode_NOT_EXISTING )
- #ifdef MACOSX
- 				// this is a workaround for MAC, on this platform if the file is locked
+-- 
+1.7.7.3
+

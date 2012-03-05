@@ -1,0 +1,28 @@
+From 18af7e03d81d295a47457486d3036681bd17eb81 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Mon, 13 Feb 2012 10:45:59 +0000
+Subject: [PATCH] preserve timestamps for .py files
+
+.pyc and .pyo binary caches contain the timestamp of the .py file, so for
+fedora multilib if the .py files get different times on different arch then the
+.py[o|c] files end up being different for the same content
+---
+ solenv/bin/install-gdb-printers |    2 +-
+ 1 files changed, 1 insertions(+), 1 deletions(-)
+
+diff --git a/solenv/bin/install-gdb-printers b/solenv/bin/install-gdb-printers
+index 99686cf..df327a0 100755
+--- a/solenv/bin/install-gdb-printers
++++ b/solenv/bin/install-gdb-printers
+@@ -165,7 +165,7 @@ fi
+ 
+ if [[ ${DESTDIR}${pythondir} != ${GDBDIR} ]]; then
+     mkdir -p "${DESTDIR}${pythondir}" || die "cannot create dir '${DESTDIR}${pythondir}'"
+-    cp -r "${GDBDIR}/libreoffice" "${DESTDIR}${pythondir}"
++    cp -pr "${GDBDIR}/libreoffice" "${DESTDIR}${pythondir}"
+ fi
+ 
+ make_autoload cppu ure-link/lib libuno_cppu."$DYLIB".3
+-- 
+1.7.7.6
+

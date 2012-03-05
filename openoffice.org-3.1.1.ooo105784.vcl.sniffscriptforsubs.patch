@@ -1,7 +1,18 @@
-diff -ru vcl.orig/unx/source/fontmanager/fontconfig.cxx vcl/unx/source/fontmanager/fontconfig.cxx
---- vcl.orig/unx/source/fontmanager/fontconfig.cxx	2009-10-08 13:25:00.000000000 +0100
-+++ vcl/unx/source/fontmanager/fontconfig.cxx	2009-10-08 13:51:51.000000000 +0100
-@@ -92,6 +92,9 @@
+From 36644331aad8382ccab7fb19d7ab3339bbff0c20 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Thu, 1 Dec 2011 14:18:09 +0100
+Subject: [PATCH 2/2] #i105784# vcl: improve selection of fallback font by
+ supplying language hint when none exists
+
+---
+ vcl/generic/fontmanager/fontconfig.cxx |  143 +++++++++++++++++++++++++++++++-
+ 1 files changed, 141 insertions(+), 2 deletions(-)
+
+diff --git a/vcl/generic/fontmanager/fontconfig.cxx b/vcl/generic/fontmanager/fontconfig.cxx
+index 4d02a76..ecd3b5d 100644
+--- a/vcl/generic/fontmanager/fontconfig.cxx
++++ b/vcl/generic/fontmanager/fontconfig.cxx
+@@ -89,6 +89,9 @@ using namespace psp;
  
  #include "sal/alloca.h"
  
@@ -11,7 +22,7 @@ diff -ru vcl.orig/unx/source/fontmanager/fontconfig.cxx vcl/unx/source/fontmanag
  #include <utility>
  #include <algorithm>
  
-@@ -1108,6 +1111,138 @@
+@@ -747,6 +750,138 @@ static void addtopattern(FcPattern *pPattern,
      }
  }
  
@@ -147,50 +158,42 @@ diff -ru vcl.orig/unx/source/fontmanager/fontconfig.cxx vcl/unx/source/fontmanag
 +    return NULL;
 +}
 +
- rtl::OUString PrintFontManager::Substitute(const rtl::OUString& rFontName,
-     rtl::OUString& rMissingCodes, const rtl::OString &rLangAttrib,
-     italic::type &rItalic, weight::type &rWeight,
-@@ -1128,14 +1263,13 @@
-     const FcChar8* pTargetNameUtf8 = (FcChar8*)aTargetName.getStr();
-     rWrapper.FcPatternAddString( pPattern, FC_FAMILY, pTargetNameUtf8 );
+ bool PrintFontManager::Substitute( FontSelectPattern &rPattern, rtl::OUString& rMissingCodes ) const
+ {
+     bool bRet = false;
+@@ -764,14 +899,13 @@ bool PrintFontManager::Substitute( FontSelectPattern &rPattern, rtl::OUString& r
+     FcPatternAddString(pPattern, FC_FAMILY, pTargetNameUtf8);
  
+     const rtl::OString aLangAttrib = MsLangId::convertLanguageToIsoByteString(rPattern.meLanguage);
 +    const FcChar8* pLangAttribUtf8 = NULL;
-     if( rLangAttrib.getLength() )
+     if( aLangAttrib.getLength() )
      {
 -        const FcChar8* pLangAttribUtf8;
-         if (rLangAttrib.equalsIgnoreAsciiCase(OString(RTL_CONSTASCII_STRINGPARAM("pa-in"))))
+         if (aLangAttrib.equalsIgnoreAsciiCase(OString(RTL_CONSTASCII_STRINGPARAM("pa-in"))))
              pLangAttribUtf8 = (FcChar8*)"pa";
          else
-             pLangAttribUtf8 = (FcChar8*)rLangAttrib.getStr();
--        rWrapper.FcPatternAddString( pPattern, FC_LANG, pLangAttribUtf8 );
+             pLangAttribUtf8 = (FcChar8*)aLangAttrib.getStr();
+-        FcPatternAddString(pPattern, FC_LANG, pLangAttribUtf8);
      }
  
      // Add required Unicode characters, if any
-@@ -1147,11 +1281,16 @@
+@@ -783,11 +917,16 @@ bool PrintFontManager::Substitute( FontSelectPattern &rPattern, rtl::OUString& r
             // also handle unicode surrogates
             const sal_uInt32 nCode = rMissingCodes.iterateCodePoints( &nStrIndex );
-            rWrapper.FcCharSetAddChar( unicodes, nCode );
+            FcCharSetAddChar( unicodes, nCode );
 +           if (!pLangAttribUtf8)
 +               pLangAttribUtf8 = (const FcChar8*)pick_sample_language(nCode);
         }
-        rWrapper.FcPatternAddCharSet( pPattern, FC_CHARSET, unicodes);
-        rWrapper.FcCharSetDestroy( unicodes );
+        FcPatternAddCharSet(pPattern, FC_CHARSET, unicodes);
+        FcCharSetDestroy(unicodes);
      }
  
 +    if( pLangAttribUtf8 )
-+        rWrapper.FcPatternAddString( pPattern, FC_LANG, pLangAttribUtf8 );
++        FcPatternAddString( pPattern, FC_LANG, pLangAttribUtf8 );
 +
-     addtopattern(rWrapper, pPattern, rItalic, rWeight, rWidth, rPitch);
+     addtopattern(pPattern, rPattern.meItalic, rPattern.meWeight,
+         rPattern.meWidthType, rPattern.mePitch);
  
-     // query fontconfig for a substitute
-diff -ru vcl.orig/util/makefile.mk vcl/util/makefile.mk
---- vcl.orig/util/makefile.mk	2009-10-08 13:25:00.000000000 +0100
-+++ vcl/util/makefile.mk	2009-10-08 13:25:09.000000000 +0100
-@@ -298,6 +298,7 @@
- # libs for generic plugin
- SHL2STDLIBS=\
- 			$(VCLLIB)\
-+            $(I18NUTILLIB)     \
-             $(I18NPAPERLIB)     \
-             $(I18NISOLANGLIB)     \
-             $(TOOLSLIB)         \
+-- 
+1.7.7.3
+

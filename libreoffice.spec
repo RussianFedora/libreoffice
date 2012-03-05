@@ -1,4 +1,4 @@
-%define libo_version 3.4.5
+%define libo_version 3.5.1
 # rhbz#715152 state vendor
 %if 0%{?rhel}
 %define vendoroption --with-vendor="Red Hat, Inc."
@@ -14,85 +14,92 @@
 %define langpacks 1
 # make it easier to download sources from pre-release site
 # http://dev-builds.libreoffice.org/pre-releases/src
-#%%define source_url http://dev-builds.libreoffice.org/pre-releases/src
-%define source_url http://download.documentfoundation.org/libreoffice/src/%{libo_version}
+#%define source_url http://download.documentfoundation.org/libreoffice/src/%{libo_version}
+%define source_url http://dev-builds.libreoffice.org/pre-releases/src
 
 %if %{langpacks}
-%define langpack_langs en-US af ar bg bn ca cs cy da de dz el es et eu fa fi fr ga gl gu he hi hr hu it ja ko kn lt lv mai ml nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh si sk sl sr ss st sv ta te th tn tr ts uk ve xh zh-CN zh-TW zu
+%if %{defined rhel} && 0%{?rhel} < 7
+%define langpack_langs en-US af ar bg bn ca cs cy da de dz el es et eu fi fr ga gl gu he hi hr hu it ja ko kn lt mai ml nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh sk sl sr ss st sv ta te th tn tr ts uk ve xh zh-CN zh-TW zu
+%else
+%define langpack_langs en-US af ar as bg bn ca cs cy da de dz el es et eu fa fi fr ga gl gu he hi hr hu it ja ko kn lt lv mai ml mr nb nl nn nr nso or pa-IN pl pt pt-BR ro ru sh si sk sl sr ss st sv ta te th tn tr ts uk ve xh zh-CN zh-TW zu
+%endif
 %define with_lang --with-lang="%{langpack_langs}"
 %else
 %define langpack_langs en-US
 %define with_lang ''
 %endif
 
+%bcond_without binfilter
+
 Summary:        Free Software Productivity Suite
 Name:           libreoffice
 Epoch:          1
-Version:        %{libo_version}.2
-Release:        1%{?dist}.R
-License:        LGPLv3 and LGPLv2+ and BSD and (MPLv1.1 or GPLv2 or LGPLv2 or Netscape) and (CDDL or GPLv2) and Public Domain
+Version:        %{libo_version}.1
+Release:        2%{?dist}
+License:        (MPLv1.1 or LGPLv3+) and LGPLv3 and LGPLv2+ and BSD and (MPLv1.1 or GPLv2 or LGPLv2 or Netscape) and Public Domain and ASL 2.0 and Artistic
 Group:          Applications/Productivity
 URL:            http://www.documentfoundation.org/develop
 BuildRoot:      %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-Source0:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-artwork-%{version}.tar.bz2
-Source1:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-base-%{version}.tar.bz2
-Source2:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-bootstrap-%{version}.tar.bz2
-Source3:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-calc-%{version}.tar.bz2
-Source4:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-components-%{version}.tar.bz2
-Source5:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-extensions-%{version}.tar.bz2
-Source6:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-extras-%{version}.tar.bz2
-Source7:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-filters-%{version}.tar.bz2
-Source8:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-help-%{version}.tar.bz2
-Source9:        http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-impress-%{version}.tar.bz2
-Source10:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-libs-core-%{version}.tar.bz2
-Source11:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-libs-extern-%{version}.tar.bz2
-Source12:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-libs-extern-sys-%{version}.tar.bz2
-Source13:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-libs-gui-%{version}.tar.bz2
-Source14:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-postprocess-%{version}.tar.bz2
-Source15:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-sdk-%{version}.tar.bz2
-Source16:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-testing-%{version}.tar.bz2
-Source17:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-ure-%{version}.tar.bz2
-Source18:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-writer-%{version}.tar.bz2
-Source19:       http://download.documentfoundation.org/libreoffice/src/3.4.5/libreoffice-translations-%{version}.tar.bz2
-Source20:       http://download.go-oo.org/extern/185d60944ea767075d27247c3162b3bc-unowinreg.dll
-Source21:       redhat-langpacks.tar.gz
-Source22:       libreoffice-multiliblauncher.sh
-Source23:       http://hg.services.openoffice.org/binaries/fdb27bfe2dbe2e7b57ae194d9bf36bab-SampleICC-1.3.2.tar.gz
-Source24:       http://hg.services.openoffice.org/binaries/a7983f859eafb2677d7ff386a023bc40-xsltml_2.1.2.zip
-Source25:       http://hg.services.openoffice.org/binaries/1f24ab1d39f4a51faf22244c94a6203f-xmlsec1-1.2.14.tar.gz
-Source26:       http://hg.services.openoffice.org/binaries/798b2ffdc8bcfe7bca2cf92b62caf685-rhino1_5R5.zip
-Source27:       http://hg.services.openoffice.org/binaries/35c94d2df8893241173de1d16b6034c0-swingExSrc.zip
-Source28:       http://hg.services.openoffice.org/binaries/ada24d37d8d638b3d8a9985e80bc2978-source-9.0.0.7-bj.zip
-Source29:       http://hg.services.openoffice.org/binaries/18f577b374d60b3c760a3a3350407632-STLport-4.5.tar.gz 
+
+Source0:        %{source_url}/libreoffice-core-%{version}.tar.xz
+Source1:        %{source_url}/libreoffice-binfilter-%{version}.tar.xz
+Source2:        %{source_url}/libreoffice-help-%{version}.tar.xz
+Source3:        %{source_url}/libreoffice-translations-%{version}.tar.xz
+Source4:        http://dev-www.libreoffice.org/extern/185d60944ea767075d27247c3162b3bc-unowinreg.dll
+Source5:        redhat-langpacks.tar.gz
+Source6:        libreoffice-multiliblauncher.sh
+Source7:        http://hg.services.openoffice.org/binaries/fdb27bfe2dbe2e7b57ae194d9bf36bab-SampleICC-1.3.2.tar.gz
+Source8:        http://hg.services.openoffice.org/binaries/a7983f859eafb2677d7ff386a023bc40-xsltml_2.1.2.zip
+Source9:        http://hg.services.openoffice.org/binaries/1f24ab1d39f4a51faf22244c94a6203f-xmlsec1-1.2.14.tar.gz
+Source10:       http://hg.services.openoffice.org/binaries/798b2ffdc8bcfe7bca2cf92b62caf685-rhino1_5R5.zip
+Source11:       http://hg.services.openoffice.org/binaries/35c94d2df8893241173de1d16b6034c0-swingExSrc.zip
+Source12:       http://hg.services.openoffice.org/binaries/ada24d37d8d638b3d8a9985e80bc2978-source-9.0.0.7-bj.zip
+Source13:       http://hg.services.openoffice.org/binaries/18f577b374d60b3c760a3a3350407632-STLport-4.5.tar.gz
 #Unfortunately later versions of hsqldb changed the file format, so if we use a later version we loose
 #backwards compatability.
-Source30:       http://hg.services.openoffice.org/binaries/17410483b5b5f267aa18b7e00b65e6e0-hsqldb_1_8_0.zip
-Source31:       http://download.go-oo.org/extern/b4cae0700aa1c2aef7eb7f345365e6f1-translate-toolkit-1.8.1.tar.bz2
-Source32:       http://dev-www.libreoffice.org/src/0ff7d225d087793c8c2c680d77aac3e7-mdds_0.5.3.tar.bz2
-Source33:       http://hg.services.openoffice.org/binaries/067201ea8b126597670b5eff72e1f66c-mythes-1.2.0.tar.gz
+Source14:       http://hg.services.openoffice.org/binaries/17410483b5b5f267aa18b7e00b65e6e0-hsqldb_1_8_0.zip
+%if %{defined rhel} && 0%{?rhel} < 7
+Source15:       http://dev-www.libreoffice.org/src/0ff7d225d087793c8c2c680d77aac3e7-mdds_0.5.3.tar.bz2
+Source16:       http://hg.services.openoffice.org/binaries/067201ea8b126597670b5eff72e1f66c-mythes-1.2.0.tar.gz
+Source17:       http://dev-www.libreoffice.org/src/0981bda6548a8c8233ffce2b6e4b2a23-mysql-connector-c++-1.1.0.tar.gz
+Source18:       http://dev-www.libreoffice.org/src/776ad69a63ac1e99abed176e54ce25d9-libvisio-0.0.14.tar.bz2
+Source19:       http://dev-www.libreoffice.org/src/e1c178b18f130b40494561f02bc1a948-libexttextcat-3.2.0.tar.bz2
+Source20:       http://dev-www.libreoffice.org/src/7c2549f6b0a8bb604e6c4c729ffdcfe6-libcmis-0.1.0.tar.gz
+Source21:       http://dev-www.libreoffice.org/src/48d8169acc35f97e05d8dcdfd45be7f2-lucene-2.3.2.tar.gz
+Source22:	http://dev-www.libreoffice.org/src/48d647fbd8ef8889e5a7f422c1bfda94-clucene-core-2.3.3.4.tar.gz
+Source23:	http://dev-www.libreoffice.org/src/061a9f17323117c9358ed60f33ecff78-postgresql-9.1.1.tar.bz2
+Source24:       http://dev-www.libreoffice.org/src/3bf481ca95109b14435125c0dd1f2217-graphite2-1.0.3.tgz
+Source25:       http://dev-www.libreoffice.org/src/9d283e02441d8cebdcd1e5d9df227d67-libwpg-0.2.1.tar.bz2
+Source26:       http://dev-www.libreoffice.org/src/c01351d7db2b205de755d58769288224-libwpd-0.9.4.tar.bz2
+Source27:       http://dev-www.libreoffice.org/src/34dd7951abbda99b7a75a09993a37965-libwps-0.2.4.tar.bz2
+Source28:       http://dev-www.libreoffice.org/src/ca66e26082cab8bb817185a116db809b-redland-1.0.8.tar.gz
+#Source29:       http://dev-www.libreoffice.org/src/bd30e9cf5523cdfc019b94f5e1d7fd19-cppunit-1.12.1.tar.gz
+%endif
+
 BuildRequires:  zip, findutils, autoconf, flex, bison, icu, gperf, gcc-c++
-BuildRequires:  binutils, java-devel < 1:1.7.0, boost-devel, zlib-devel
+BuildRequires:  binutils, java-devel, boost-devel
 BuildRequires:  python-devel, expat-devel, libxml2-devel, libxslt-devel, bc
 BuildRequires:  neon-devel, libcurl-devel, libidn-devel, pam-devel, cups-devel
 BuildRequires:  libXext-devel, libXt-devel, libICE-devel, libjpeg-devel, make
 BuildRequires:  gecko-devel, libwpd-devel, hunspell-devel, unixODBC-devel
-BuildRequires:  db4-devel, sane-backends-devel, libicu-devel, perl(Archive::Zip)
+BuildRequires:  sane-backends-devel, libicu-devel, libXinerama-devel
 BuildRequires:  freetype-devel, gtk2-devel, desktop-file-utils, hyphen-devel
-BuildRequires:  evolution-data-server-devel, libtextcat-devel, nss-devel
+BuildRequires:  evolution-data-server-devel, nss-devel, zlib-devel
 BuildRequires:  gstreamer-devel, gstreamer-plugins-base-devel, openssl-devel
-BuildRequires:  lpsolve-devel, bsh, lucene, lucene-contrib
+BuildRequires:  lpsolve-devel, bsh, lucene, lucene-contrib, perl(Archive::Zip)
 BuildRequires:  mesa-libGLU-devel, redland-devel, ant, ant-apache-regexp, rsync
 BuildRequires:  jakarta-commons-codec, jakarta-commons-httpclient, cppunit-devel
 BuildRequires:  jakarta-commons-lang, poppler-devel, fontpackages-devel
-BuildRequires:  pentaho-reporting-flow-engine, libXinerama-devel
-BuildRequires:  vigra-devel
+BuildRequires:  pentaho-reporting-flow-engine, vigra-devel, librsvg2-devel
+BuildRequires:  GConf2-devel, ORBit2-devel, postgresql-devel
 BuildRequires:  font(:lang=en)
-BuildRequires:  liberation-mono-fonts
 %if %{defined rhel} && 0%{?rhel} < 7
-BuildRequires:  hsqldb
+BuildRequires:  hsqldb libdb-devel
 %else
 BuildRequires:  mdds-devel, mythes-devel, graphite2-devel, libwpg-devel
-BuildRequires:  libwps-devel, junit4, perl(Digest::MD5)
+BuildRequires:  libwps-devel, junit, perl(Digest::MD5), libdb-devel
+BuildRequires:  mysql-connector-c++-devel, poppler-cpp-devel
+BuildRequires:  libcmis-devel, libexttextcat-devel, libvisio-devel
 %endif
 %if %{undefined rhel}
 BuildRequires:  kdelibs4-devel
@@ -115,56 +122,30 @@ Patch3:  openoffice.org-3.0.0.ooo88341.sc.verticalboxes.patch
 Patch4:  openoffice.org-3.1.0.oooXXXXX.solenv.allowmissing.patch
 Patch5:  openoffice.org-3.1.0.ooo101274.opening-a-directory.patch
 Patch6:  openoffice.org-3.1.1.ooo105784.vcl.sniffscriptforsubs.patch
-Patch7:  openoffice.org-3.3.0.ooo108637.sfx2.uisavedir.patch
-Patch8:  openoffice.org-3.3.0.ooo113273.desktop.resolvelinks.patch
-Patch9:  libreoffice-installfix.patch
-Patch10: 0001-helgrind-Related-rhbz-655686-get-order-of-shutdown-c.patch
-Patch11: kde4configure.patch
-Patch12: 0001-Resolves-rhbz-695509-crash-in-RefreshDocumentLB.patch
-Patch13: 0001-bubble-down-configure-test-findings-on-visibility.patch
-Patch14: vbahelper.visibility.patch
-Patch15: 0001-rhbz-702635-set-correct-page-number-when-exporting-s.patch
-Patch16: 0001-Related-rhbz-652604-better-survive-exceptions-thrown.patch
-Patch17: 0001-Resolves-rhbz-713154-pdf-export-dialog-too-tall-to-f.patch
-Patch18: 0001-Related-rhbz-702833-addEventListener-without-removeE.patch
-Patch19: 0001-Related-rhbz-711087-band-aid.patch
-Patch20: 0001-rhbz-667082-do-not-crash-importing-section-containin.patch
-Patch21: 0001-Related-rhbz-718976-crash-in-SwTxtSizeInfo-GetMultiC.patch
-Patch22: 0001-Resolves-rhbz-715549-use-fontconfig-s-detected-forma.patch
-Patch23: 0001-Resolves-rhbz-693265-fix-crash-from-unhandled-except.patch
-Patch24: 0001-Related-rhbz-730225-avoid-segv-in-ld-this-was-set-to.patch
-Patch25: gdb-pretty-printers.patch
-Patch26: 0001-Related-fdo-37195-migrationoo3-not-registered.patch
-Patch27: 0001-Resolves-rhbz-738255-avoid-crash-on-NULL-pointer.patch
-Patch28: 0001-Resolves-rhbz-751290-KDE-black-on-dark-tooltips.patch
-Patch29: 0001-gtk3-fix-cairo-canvas-crash-for-non-X-or-svp-backend.patch
-Patch30: 0001-Resolves-rhbz-759647-dispose-clears-mpPresTimer-befo.patch
-Patch31: 0001-Resolves-rhbz-761009-IFSD_Equal-is-asymmetrical.patch
-Patch32: 0001-Resolves-rhbz-767708-avoid-SIGBUS-writing-to-overcom.patch
-Patch33: 0001-smath-does-not-handle-accents-in-MathML.patch
-Patch34: 0001-fix-writing-of-strings-from-the-first-module.patch
-Patch35: 0001-Confine-JDBC-driver-to-thread-affine-apartment-for-J.patch
+Patch7:  libreoffice-installfix.patch
 %if %{defined rhel} && 0%{?rhel} < 7
-Patch36: libreoffice-libwpd08-1.patch
-Patch37: libreoffice-libwpd08-2.patch
-Patch38: 0001-wpsimport-writerperfect.diff-WPS-Import-filter-core-.patch
-Patch39: libreoffice-gcj.patch
-Patch40: libreoffice-rhel6poppler.patch
-Patch41: libreoffice-rhel6langs.patch
+Patch8: libreoffice-libwpd08-1.patch
+Patch9: libreoffice-libwpd08-2.patch
+Patch10: 0001-wpsimport-writerperfect.diff-WPS-Import-filter-core-.patch
+Patch11: libreoffice-gcj.patch
+Patch12: libreoffice-rhel6poppler.patch
+Patch13: libreoffice-rhel6langs.patch
 %endif
-Patch42: solenv.fix.mk.inheritance.patch
-Patch43: 0001-Related-rhbz-753201-fedora-ant-java-1.5.0-gcj-won-t-.patch
-Patch44: 0001-Resolves-fdo-44078-fix-unfortunate-name-alias-mixups.patch
+%if %{with binfilter}
+Patch14: 0001-move-binfilter-mime-types-into-extra-.desktop-file.patch
+%endif
+Patch15: 0001-Resolves-rhbz-788042-skip-splashscreen-with-quicksta.patch
+Patch16: 0001-make-hsqldb-build-with-java-1.7.patch
+Patch17: libreoffice-ensure-non-broken-xml-tree.patch
+Patch18: 0001-preserve-timestamps-for-.py-files.patch
+Patch19: 0001-Resolves-rhbz-788045-swriter-help-etc-doesn-t-show-h.patch
 
 %{!?python_sitearch: %global python_sitearch %(%{__python} -c "from distutils.sysconfig import get_python_lib; print(get_python_lib(1))")}
 %define instdir %{_libdir}
 %define baseinstdir %{instdir}/libreoffice
 %define ureinstdir %{baseinstdir}/ure
-%define basisinstdir %{baseinstdir}/basis3.4
-%define sdkinstdir %{baseinstdir}/basis3.4/sdk
+%define sdkinstdir %{baseinstdir}/sdk
 %define fontname opensymbol
-%define OFFICEUPD 340
-%define SOPOST l*
 
 %description
 LibreOffice is an Open Source, community-developed, office productivity suite.
@@ -189,6 +170,7 @@ Requires(preun):  gtk2 >= 2.9.4
 Requires(postun): gtk2 >= 2.9.4
 Obsoletes: openoffice.org-core < 1:3.3.1
 Obsoletes: openoffice.org-brand < 1:3.3.1, broffice.org-brand < 1:3.3.1
+%if %{defined rhel} && 0%{?rhel} < 7
 Provides: openoffice.org-core = 1:3.3.0
 Provides: openoffice.org-brand = 1:3.3.0, broffice.org-brand = 1:3.3.0
 Obsoletes: openoffice.org-libs < 1.9.0
@@ -196,8 +178,16 @@ Obsoletes: openoffice.org-i18n < 1.9.0
 Obsoletes: openoffice.org-kde < 1.9.0
 Obsoletes: openoffice.org-langpack-eo < 1:2.0.0
 Obsoletes: openoffice.org2-core < 1:3.0.0
+%else
 Obsoletes: openoffice.org-langpack-ms < 1:3.3.1, libreoffice-langpack-ms < 1:3.3.99.1
 Obsoletes: openoffice.org-langpack-ur < 1:3.3.1, libreoffice-langpack-ur < 1:3.3.99.1
+%endif
+Obsoletes: openoffice.org-testtools < 1:3.3.1
+Obsoletes: libreoffice-testtools < 1:3.4.99.1
+%if %{defined rhel} && 0%{?rhel} < 7
+Provides: openoffice.org-testtools = 1:3.3.0
+Obsoletes: openoffice.org2-testtools < 1:3.0.0
+%endif
 
 %description core
 The shared core libraries and support files for LibreOffice.
@@ -246,6 +236,8 @@ databases through a GUI.
 Summary: Create database reports from LibreOffice
 Group: Applications/Productivity
 Requires: pentaho-reporting-flow-engine
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-base = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Requires(post):   %{name}-core
@@ -299,6 +291,7 @@ Summary: Create Wiki articles on MediaWiki servers with LibreOffice
 Group: Applications/Productivity
 Requires: jakarta-commons-codec, jakarta-commons-httpclient
 Requires: jakarta-commons-lang, jakarta-commons-logging
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
 Requires: %{name}-writer = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Requires(post):   %{name}-core
@@ -314,9 +307,26 @@ The Wiki Publisher enables you to create Wiki articles on MediaWiki servers
 without having to know the syntax of the MediaWiki markup language. Publish
 your new and existing documents transparently with writer to a wiki page.
 
+%package nlpsolver
+Summary: Non-linear solver engine for LibreOffice Calc
+Group: Applications/Productivity
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
+Requires: %{name}-calc = %{epoch}:%{version}-%{release}
+Requires(pre):    %{name}-core
+Requires(post):   %{name}-core
+Requires(preun):  %{name}-core
+Requires(postun): %{name}-core
+
+%description nlpsolver
+A non-linear solver engine for Calc as an alternative to the default linear
+programming model when more complex, nonlinear programming is required.
+
 %package ogltrans
 Summary: 3D OpenGL slide transitions for LibreOffice
 Group: Applications/Productivity
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-impress = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Obsoletes: openoffice.org-ogltrans < 1:3.3.1
@@ -331,6 +341,8 @@ Requires good quality 3D support for your graphics card for best experience.
 %package presentation-minimizer
 Summary: Shrink LibreOffice presentations
 Group: Applications/Productivity
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-impress = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Requires(post):   %{name}-core
@@ -349,6 +361,8 @@ be removed.
 %package presenter-screen
 Summary: Presenter Screen for LibreOffice Presentations
 Group: Applications/Productivity
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-impress = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Requires(post):   %{name}-core
@@ -367,6 +381,8 @@ slide notes.
 %package pdfimport
 Summary: PDF Importer for LibreOffice Draw
 Group: Applications/Productivity
+Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-draw = %{epoch}:%{version}-%{release}
 Requires(pre):    %{name}-core
 Requires(post):   %{name}-core
@@ -465,6 +481,7 @@ Summary: LibreOffice Presentation Application
 Group: Applications/Productivity
 Requires: %{name}-core = %{epoch}:%{version}-%{release}
 Requires: %{name}-ure = %{epoch}:%{version}-%{release}
+Requires: %{name}-ogltrans = %{epoch}:%{version}-%{release}
 Requires: %{name}-presenter-screen = %{epoch}:%{version}-%{release}
 Obsoletes: openoffice.org-impress-core < 1:3.3.1
 Obsoletes: openoffice.org-impress < 1:3.3.1, broffice.org-impress < 1:3.3.1
@@ -542,27 +559,15 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 %postun javafilter
 update-desktop-database %{_datadir}/applications &> /dev/null || :
 
-%package testtools
-Summary: Testtools for LibreOffice
-Group: Development/Libraries
-Requires: %{name}-ure = %{epoch}:%{version}-%{release}
-Requires: %{name}-core = %{epoch}:%{version}-%{release}
-Requires: %{name}-writer = %{epoch}:%{version}-%{release}
-Requires: %{name}-calc = %{epoch}:%{version}-%{release}
-Requires: %{name}-draw = %{epoch}:%{version}-%{release}
-Requires: %{name}-impress = %{epoch}:%{version}-%{release}
+%package postgresql
+Summary: PostgreSQL connector for LibreOffice
+Group: Applications/Productivity
 Requires: %{name}-base = %{epoch}:%{version}-%{release}
-Requires: %{name}-math = %{epoch}:%{version}-%{release}
-Requires: %{name}-bsh = %{epoch}:%{version}-%{release}
-Requires: %{name}-rhino = %{epoch}:%{version}-%{release}
-Obsoletes: openoffice.org-testtools < 1:3.3.1
-%if %{defined rhel} && 0%{?rhel} < 7
-Provides: openoffice.org-testtools = 1:3.3.0
-Obsoletes: openoffice.org2-testtools < 1:3.0.0
-%endif
+Requires: postgresql-libs
 
-%description testtools
-QA tools for LibreOffice, enables automated testing.
+%description postgresql
+A PostgreSQL connector for the database front-end for LibreOffice. Allows
+creation and management of PostgreSQL databases through a GUI.
 
 %package ure
 Summary: UNO Runtime Environment
@@ -636,6 +641,16 @@ Requires: %{name}-core = %{epoch}:%{version}-%{release}
 A plug-in for LibreOffice that enables integration into the KDE desktop environment.
 %endif
 
+%if %{with binfilter}
+%package binfilter
+Summary: Legacy binary filters for LibreOffice
+Group: Applications/Productivity
+Requires: %{name}-core = %{epoch}:%{version}-%{release}
+
+%description binfilter
+Filters for old StarOffice binary formats.
+%endif
+
 %if 0%{?_enable_debug_packages}
 
 %define debug_package %{nil}
@@ -667,6 +682,8 @@ This package provides gdb pretty printers for package %{name}.
 
 %files gdb-debug-support
 %defattr(-,root,root)
+# TODO does it make sense to install this?
+%{baseinstdir}/program/gdbtrace
 %{_datadir}/gdb/auto-load%{baseinstdir}
 %{_datadir}/libreoffice/gdb
 
@@ -734,12 +751,12 @@ Requires: %{name}-core = %{epoch}:%{version}-%{release} \
 %{-o: \
 Obsoletes: openoffice.org-i18n < 1.9.0 \
 Obsoletes: %{obs}-%{-o*} < %{obsv} \
-Provides: %{obs}-%{-o*} = 1:3.3.0  \
+Provides: %{obs}-%{-o*} = 1:3.3.1.1  \
 }%{!-o: \
 %{-O: \
 Obsoletes: openoffice.org-i18n < 1.9.0 \
 Obsoletes: %{obs}-%{lang} < %{obsv} \
-Provides: %{obs}-%{lang} = 1:3.3.0  \
+Provides: %{obs}-%{lang} = 1:3.3.1.1  \
 }} \
 %else \
 %{-o:Obsoletes: %{obs}-%{-o*} < %{obsv}}%{!-o:%{-O:Obsoletes: %{obs}-%{lang} < %{obsv}}} \
@@ -781,7 +798,7 @@ Rules for auto-correcting common %{langname} typing errors. \
 \
 %files -n %{pkgname} \
 %defattr(-,root,root,-) \
-%doc solver/%{OFFICEUPD}/unxlng*/bin/ure/LICENSE \
+%doc solver/unxlng*/bin/ure/LICENSE \
 %dir %{_datadir}/autocorr \
 %{!-X:%{_datadir}/autocorr/acor_%{lang}-*} \
 %*
@@ -791,6 +808,7 @@ Rules for auto-correcting common %{langname} typing errors. \
 
 %langpack -l af -n Afrikaans -F -H -Y -A -o af_ZA -V -x af_ZA -S
 %langpack -l ar -n Arabic -F -H -O -X -S
+#langpack -l as -n Assamese -F -H -Y -o as_IN -x as_IN -S
 %langpack -l bg -n Bulgarian -F -H -Y -M -A -o bg_BG -V -x bg_BG -S
 %langpack -l bn -n Bengali -F -H -Y -O -v bn_IN -X -S
 %langpack -l ca -n Catalan -F -H -Y -M -o ca_ES -V -x ca_ES -S
@@ -804,7 +822,9 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l es -n Spanish -F -H -Y -M -A -O -X -S
 %langpack -l et -n Estonian -F -H -Y -o et_EE -V -x et_EE -S
 %langpack -l eu -n Basque -F -H -Y -A -o eu_ES -V -x eu_ES -S
+%if %{undefined rhel} || 0%{?rhel} >= 7
 %langpack -l fa -n Farsi -A -H -Y -S
+%endif
 %if %{defined rhel} && 0%{?rhel} < 7
 %langpack -l fi -n Finnish -F -A -o fi_FI -V -x fi_FI -S
 %else
@@ -815,7 +835,7 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l gl -n Galician -F -H -Y -o gl_ES -V -x gl_ES -S
 %langpack -l gu -n Gujarati -F -H -Y -o gu_IN -x gu_IN -S
 %langpack -l he -n Hebrew -F -H -o he_IL -V -x he_IL -S
-%langpack -l hi -n Hindi -F -H -Y -o hi_IN -v hi_IN -x hi_IN -S
+%langpack -l hi -n Hindi -F -H -Y -o hi_IN -v hi-IN -x hi_IN -S
 %langpack -l hr -n Croatian -F -H -Y -A -o hr_HR -V -x hr_HR -S
 %langpack -l hu -n Hungarian -F -H -Y -M -A -o hu_HU -V -x hu_HU -S
 %langpack -l it -n Italian -F -H -Y -M -A -O -X -S
@@ -825,7 +845,9 @@ Rules for auto-correcting common %{langname} typing errors. \
 %{baseinstdir}/share/registry/korea.xcd
 
 %langpack -l lt -n Lithuanian -F -H -Y -A -o lt_LT -V -x lt_LT -S
+%if %{undefined rhel} || 0%{?rhel} >= 7
 %langpack -l lv -n Latvian -F -H -Y -M -S
+%endif
 %langpack -l mai -n Maithili -F -o mai_IN -S
 %langpack -l ml -n Malayalam -F -H -Y -o ml_IN -x ml_IN -S
 %langpack -l nb -n Bokmal -F -H -Y -M -o nb_NO -V -x nb_NO -S
@@ -839,11 +861,13 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l pa -n Punjabi -F -H -Y -O -v pa_IN -x pa_IN -s pa-IN
 %langpack -l pl -n Polish -F -H -Y -M -A -o pl_PL -V -x pl_PL -S
 %define langpack_lang Brazilian Portuguese
-%langpack -l pt-BR -n %{langpack_lang} -f pt -h pt -y pt -m pt -a pt -o pt_BR -p pt_BR -V -X -S
+%langpack -l pt-BR -n %{langpack_lang} -f pt -h pt -y pt -m pt -a pt -o pt_BR -p pt_BR -V -x pt_BR -S
 %langpack -l pt-PT -n Portuguese -f pt -h pt -y pt -m pt -a pt -o pt_PT -p pt_PT -v pt -X -s pt
 %langpack -l ro -n Romanian -F -H -Y -M -O -S
 %langpack -l ru -n Russian -F -H -Y -M -A -O -X -S
+%if %{undefined rhel} || 0%{?rhel} >= 7
 %langpack -l si -n Sinhalese -F -H -O -S
+%endif
 %langpack -l sk -n Slovak -F -H -Y -M -A -o sk_SK -V -x sk_SK -S
 %langpack -l sl -n Slovenian -F -H -Y -M -A -o sl_SI -V -x sl_SI -S
 %langpack -l sr -n Serbian -F -H -Y -A -O -v sr_CS -x sr_CS -S
@@ -854,16 +878,18 @@ Rules for auto-correcting common %{langname} typing errors. \
 %langpack -l ta -n Tamil -F -H -Y -o ta_IN -x ta_IN -S
 %langpack -l te -n Telugu -F -H -Y -o te_IN -x te_IN -S
 %langpack -l th -n Thai -F -H -o th_TH -V -x th_TH -S
+%{baseinstdir}/share/registry/ctlseqcheck_th.xcd
+
 %langpack -l tn -n Tswana -F -H -o tn_ZA -V -x tn_ZA -S
-%langpack -l tr -n Turkish -F -A -o tr_TR -V -x tr_TR -S
+%langpack -l tr -n Turkish -F -A -o tr_TR -V -X -S
 %langpack -l ts -n Tsonga -F -H -o ts_ZA -V -x ts_ZA -S
 %langpack -l uk -n Ukrainian -F -H -Y -M -O -S
 %langpack -l ve -n Venda -F -H -o ve_ZA -S
 %langpack -l xh -n Xhosa -F -H -o xh_ZA -S
 %define langpack_lang Simplified Chinese
-%langpack -l zh-Hans -n %{langpack_lang} -f zh-cn -a zh -o zh_CN -p zh_CN -v zh_CN -x zh_CN -s zh-CN
+%langpack -l zh-Hans -n %{langpack_lang} -f zh-cn -a zh -o zh_CN -p zh_CN -v zh-CN -x zh_CN -s zh-CN
 %define langpack_lang Traditional Chinese
-%langpack -l zh-Hant -n %{langpack_lang} -f zh-tw -a zh -o zh_TW -p zh_TW -v zh_TW -x zh_TW -s zh-TW
+%langpack -l zh-Hant -n %{langpack_lang} -f zh-tw -a zh -o zh_TW -p zh_TW -v zh-TW -x zh_TW -s zh-TW
 %langpack -l zu -n Zulu -F -H -Y -o zu_ZA -V -x zu_ZA -S
 %undefine langpack_lang
 
@@ -911,7 +937,8 @@ Rules for auto-correcting common %{langname} typing errors. \
 %endif
 
 %prep
-%setup -q -c -a 1 -a 2 -a 3 -a 4 -a 5 -a 6 -a 7 -a 8 -a 9 -a 10 -a 11 -a 12 -a 13 -a 14 -a 15 -a 16 -a 17 -a 18 -a 19
+%setup -q -c -a 1 -a 2 -a 3
+rm -rf git-hooks */git-hooks
 for a in */*; do mv `pwd`/$a .; done
 #Customize Palette to remove Sun colours and add Red Hat colours
 (head -n -1 extras/source/palettes/standard.soc && \
@@ -926,53 +953,30 @@ mv -f redhat.soc extras/source/palettes/standard.soc
 %patch2  -p1 -b .ooo86080.unopkg.bodge.patch
 %patch3  -p1 -b .ooo88341.sc.verticalboxes.patch
 %patch4  -p1 -b .oooXXXXX.solenv.allowmissing.patch
-%patch5  -p0 -b .ooo101274.opening-a-directory.patch
-%patch6  -p0 -b .ooo105784.vcl.sniffscriptforsubs.patch
-%patch7  -p1 -b .ooo108637.sfx2.uisavedir.patch
-%patch8  -p0 -b .ooo113273.desktop.resolvelinks.patch
-%patch9  -p1 -b .libreoffice-installfix.patch
-%patch10 -p1 -b .rhbz655686-get-order-of-shutdown-c.patch
-%patch11 -p0 -b .kde4configure.patch
-%patch12 -p1 -b .rhbz695509-crash-in-RefreshDocumentLB.patch
-%patch13 -p1 -b .bubble-down-configure-test-findings-on-visibility.patch
-%patch14 -p0 -b .vbahelper.visibility.patch
-%patch15 -p1 -b .rhbz702635-set-correct-page-number-when-exporting-s.patch
-%patch16 -p1 -b .rhbz652604-better-survive-exceptions-thrown.patch
-%patch17 -p1 -b .rhbz713154-pdf-export-dialog-too-tall-to-f.patch
-%patch18 -p1 -b .rhbz702833-addEventListener-without-removeE.patch
-%patch19 -p1 -b .rhbz711087-band-aid.patch
-%patch20 -p1 -b .rhbz667082-do-not-crash-importing-section-containin.patch
-%patch21 -p1 -b .rhbz718976-crash-in-SwTxtSizeInfo-GetMultiC.patch
-%patch22 -p1 -b .rhbz715549-use-fontconfig-s-detected-forma.patch
-%patch23 -p1 -b .rhbz693265-fix-crash-from-unhandled-except.patch
-%patch24 -p1 -b .rhbz730225-avoid-segv-in-ld-this-was-set-to.patch
-%patch25 -p1
-%patch26 -p1 -b .fdo37195-migrationoo3-not-registered.patch
-%patch27 -p1 -b .rhbz738255-avoid-crash-on-NULL-pointer.patch
-%patch28 -p1 -b .rhbz751290-KDE-black-on-dark-tooltips.patch
-%patch29 -p1 -b .gtk3-fix-cairo-canvas-crash-for-non-X-or-svp-backend.patch
-%patch30 -p1 -b .rhbz759647-dispose-clears-mpPresTimer-befo.patch
-%patch31 -p1 -b .rhbz761009-IFSD_Equal-is-asymmetrical.patch
-%patch32 -p1 -b .rhbz-767708-avoid-SIGBUS-writing-to-overcom.patch
-%patch33 -p1 -b .smath-does-not-handle-accents-in-MathML.patch
-%patch34 -p1 -b .fix-writing-of-strings-from-the-first-module.patch
-%patch35 -p1 -b .Confine-JDBC-driver-to-thread-affine-apartment-for-J.patch
+%patch5  -p1 -b .ooo101274.opening-a-directory.patch
+%patch6  -p1 -b .ooo105784.vcl.sniffscriptforsubs.patch
+%patch7  -p1 -b .libreoffice-installfix.patch
 %if %{defined rhel} && 0%{?rhel} < 7
-%patch36 -p1 -b .libwpd08-1.patch
-%patch37 -p1 -R -b .libreoffice-libwpd08-2.patch
-%patch38 -p1 -R -b .wpsimport
-%patch39 -p1 -b .gcj.patch
-%patch40 -p0 -b .rhel6poppler.patch
-%patch41 -p0 -b .rhel6langs.patch
+#%patch8 -p1 -b .libwpd08-1.patch
+#%patch9 -p1 -R -b .libreoffice-libwpd08-2.patch
+#%patch10 -p1 -R -b .wpsimport
+#%patch11 -p1 -b .gcj.patch
+%patch12 -p0 -b .rhel6poppler.patch
+#%patch13 -p0 -b .rhel6langs.patch
 %endif
-%patch42 -p1 -b .solenv.fix.mk.inheritance.patch
-%patch43 -p1 -b .rhbz-753201-fedora-ant-java-1.5.0-gcj-won-t-.patch
-%patch44 -p1 -b .fdo44078-fix-unfortunate-name-alias-mixups.patch
+%if %{with binfilter}
+%patch14 -p1 -b .move-binfilter-mime-types-into-extra-.desktop-file.patch
+%endif
+%patch15 -p1 -b .rhbz788042-skip-splashscreen-with-quicksta.patch
+%patch16 -p1 -b .make-hsqldb-build-with-java-1.7.patch
+%patch17 -p1 -b .ensure-non-broken-xml-tree.patch
+%patch18 -p1 -b .preserve-timestamps-for-.py-files.patch
+%patch19 -p1 -b .rhbz788045-swriter-help-etc-doesn-t-show-h.patch
 
+# TODO: check this
 # these are horribly incomplete--empty translations and copied english
 # strings with spattering of translated strings
 rm -rf translations/source/{gu,he,hr}/helpcontent2
-chmod +x solenv/bin/install-gdb-printers
 
 %build
 echo build start time is `date`, diskspace: `df -h . | tail -n 1`
@@ -1005,56 +1009,74 @@ export ARCH_FLAGS
 export CFLAGS=$ARCH_FLAGS
 export CXXFLAGS=$ARCH_FLAGS
 
-%if %{defined rhel}
-%if 0%{?rhel} < 7
-%define distrooptions --disable-graphite --without-system-mythes --without-system-mdds --without-junit
-%else
-%define distrooptions --without-system-hsqldb
-%endif
-%else
-%define distrooptions --without-system-hsqldb --enable-kde4
-%endif
+#%if %{defined rhel}
+#%if 0%{?rhel} < 7
+#%define distrooptions --disable-graphite --without-system-mythes \
+#    --without-system-mdds --without-junit --without-system-mysql-cppconn
+#%else
+#%define distrooptions --without-system-hsqldb
+#%endif
+#%else
+#%define distrooptions --without-system-hsqldb --enable-kde4
+#%endif
 
 autoconf
 %configure \
  %vendoroption --with-num-cpus=$NBUILDS --with-max-jobs=$NDMAKES \
  --with-build-version="Ver: %{version}-%{release}" --with-unix-wrapper=%{name} \
- --disable-ldap --disable-epm --disable-mathmldtd --disable-Xaw \
+ --disable-ldap --disable-epm --disable-mathmldtd \
  --disable-gnome-vfs --enable-gio --enable-symbols --enable-lockdown \
- --enable-evolution2 --enable-cairo --enable-dbus --enable-opengl --enable-vba \
- --enable-binfilter --enable-ext-presenter-minimizer \
+ --enable-evolution2 --enable-dbus --enable-opengl --enable-vba \
+ --enable-ext-presenter-minimizer --enable-ext-nlpsolver \
  --enable-ext-presenter-console --enable-ext-pdfimport \
  --enable-ext-wiki-publisher --enable-ext-report-builder \
  --enable-ext-scripting-beanshell --enable-ext-scripting-javascript \
- --enable-ext-scripting-python --with-system-libtextcat \
- --with-system-jfreereport --with-vba-package-format="builtin" \
+ --without-system-servlet-api \
+ --with-system-jars --with-vba-package-format="builtin" \
  --with-system-libs --with-system-headers --with-system-mozilla \
- --with-system-mythes --with-system-dicts --with-system-apache-commons \
+ --without-system-mozilla-headers --with-system-mythes --with-system-dicts \
  --without-system-saxon --with-external-dict-dir=/usr/share/myspell \
+ --without-system-lucene --without-system-postgresql \
+ --without-system-mdds --without-system-libexttextcat \
+ --without-system-libwpd --without-system-libwps --without-system-libwpg \
+ --without-system-graphite --without-junit \
  --without-myspell-dicts --without-fonts --without-ppds --without-afms \
  %{with_lang} --with-poor-help-localizations="$POORHELPS" \
  --with-external-tar=`pwd`/ext_sources --with-java-target-version=1.5 \
- --with-external-libtextcat-data --without-system-translate-toolkit \
- %{distrooptions}
+ --without-system-sampleicc \
+ --without-system-mythes --without-system-mysql-cppconn \
+ %{?with_binfilter:--enable-binfilter}
 
 mkdir -p ext_sources
+cp %{SOURCE4} ext_sources
+cp %{SOURCE7} ext_sources
+cp %{SOURCE8} ext_sources
+cp %{SOURCE9} ext_sources
+cp %{SOURCE10} ext_sources
+cp %{SOURCE11} ext_sources
+cp %{SOURCE12} ext_sources
+cp %{SOURCE13} ext_sources
+cp %{SOURCE14} ext_sources
+%if %{defined rhel} && 0%{?rhel} < 7
+cp %{SOURCE15} ext_sources
+cp %{SOURCE16} ext_sources
+cp %{SOURCE17} ext_sources
+cp %{SOURCE18} ext_sources
+cp %{SOURCE19} ext_sources
 cp %{SOURCE20} ext_sources
+cp %{SOURCE21} ext_sources
+cp %{SOURCE22} ext_sources
 cp %{SOURCE23} ext_sources
 cp %{SOURCE24} ext_sources
 cp %{SOURCE25} ext_sources
 cp %{SOURCE26} ext_sources
 cp %{SOURCE27} ext_sources
 cp %{SOURCE28} ext_sources
-cp %{SOURCE29} ext_sources
-cp %{SOURCE30} ext_sources
-cp %{SOURCE31} ext_sources
-%if %{defined rhel} && 0%{?rhel} < 7
-cp %{SOURCE32} ext_sources
-cp %{SOURCE33} ext_sources
+#cp %{SOURCE29} ext_sources
 %endif
 touch src.downloaded
 
-. ./*[Ee]nv.[Ss]et.sh
+. ./Env.Host.sh
 ./bootstrap
 
 cd instsetoo_native
@@ -1074,18 +1096,9 @@ cd unxlng*/misc/libreoffice
 echo build end time is `date`, diskspace: `df -h . | tail -n 1`
 
 
-%define install_bundled_extension(f:n:) \
-%define extname_ %{-n:%{-n*}}%{!-n:%{error:No extension name given}} \
-%define filename_ %{-f:%{-f*}}%{!-f:%{extname_}.oxt} \
-%define extdir_ $RPM_BUILD_ROOT/%{baseinstdir}/share/extensions \
-install -d -m 755 %{extdir_}/%{extname_} \
-unzip -d %{extdir_}/%{extname_} $SOLARVER/$INPATH/bin/%{filename_} \
-find %{extdir_}/%{extname_} -type f -name '*.txt' -exec chmod -x '{}' \\;
-
-
 %install
 rm -rf $RPM_BUILD_ROOT
-source ./Linux*Env.Set.sh
+source ./Env.Host.sh
 #figure out the icon version
 export `grep "^PRODUCTVERSIONSHORT =" solenv/inc/productversion.mk | sed -e "s/ //g"`
 export `grep "PRODUCTVERSION[ ]*=[ ]*" solenv/inc/productversion.mk | sed -e "s/ //g"`
@@ -1124,18 +1137,8 @@ rm -rf $RPM_BUILD_ROOT/%{baseinstdir}/share/prereg
 $RPM_BUILD_ROOT/%{baseinstdir}/program/unopkg list --bundled || :
 export WITH_LANG="en-US"
 dmake sdkoo
-mv ../unxlng*.pro/LibreOffice_SDK/installed/install/en-US/*/sdk $RPM_BUILD_ROOT/%{sdkinstdir}
+mv ../unxlng*.pro/LibreOffice_SDK/installed/install/en-US/sdk $RPM_BUILD_ROOT/%{sdkinstdir}
 cd ../../
-
-# unpack extensions
-%install_bundled_extension -n pdfimport -f pdfimport/pdfimport.oxt
-%install_bundled_extension -n presentation-minimizer -f minimizer/presentation-minimizer.oxt
-%install_bundled_extension -n presenter-screen -f presenter/presenter-screen.oxt
-%install_bundled_extension -n report-builder
-%install_bundled_extension -n script-provider-for-beanshell
-%install_bundled_extension -n script-provider-for-javascript
-%install_bundled_extension -n script-provider-for-python
-%install_bundled_extension -n wiki-publisher -f swext/wiki-publisher.oxt
 
 #configure sdk
 pushd $RPM_BUILD_ROOT/%{sdkinstdir}
@@ -1143,7 +1146,6 @@ pushd $RPM_BUILD_ROOT/%{sdkinstdir}
         sed -e "s,@OO_SDK_NAME@,sdk," \
             -e "s,@OO_SDK_HOME@,%{sdkinstdir}," \
             -e "s,@OFFICE_HOME@,%{baseinstdir}," \
-            -e "s,@OFFICE_BASE_HOME@,%{basisinstdir}," \
             -e "s,@OO_SDK_URE_HOME@,%{ureinstdir}," \
             -e "s,@OO_SDK_MAKE_HOME@,/usr/bin," \
             -e "s,@OO_SDK_ZIP_HOME@,/usr/bin," \
@@ -1159,17 +1161,15 @@ pushd $RPM_BUILD_ROOT/%{sdkinstdir}
     find examples -type f -exec chmod -x {} \;
 popd
 
-chmod -x $RPM_BUILD_ROOT/%{basisinstdir}/program/testtoolrc
-
 #ensure a template dir for each lang
-pushd $RPM_BUILD_ROOT/%{basisinstdir}/share/template
+pushd $RPM_BUILD_ROOT/%{baseinstdir}/share/template
 for I in %{langpack_langs}; do
     mkdir -p $I
 done
 popd
 
 #Set some aliases to canonical autocorrect language files for locales with matching languages
-pushd $RPM_BUILD_ROOT/%{basisinstdir}/share/autocorr
+pushd $RPM_BUILD_ROOT/%{baseinstdir}/share/autocorr
 
 en_GB_aliases="en-AG en-AU en-BS en-BW en-BZ en-CA en-DK en-GH en-HK en-IE en-IN en-JM en-NG en-NZ en-SG en-TT"
 for lang in $en_GB_aliases; do
@@ -1206,7 +1206,7 @@ it_IT_aliases="it-CH"
 for lang in $it_IT_aliases; do
         ln -sf acor_it-IT.dat acor_$lang.dat
 done
-nl_NL_aliases="nl-AW nl-BE"
+nl_NL_aliases="nl-AW"
 for lang in $nl_NL_aliases; do
         ln -s acor_nl-NL.dat acor_$lang.dat
 done
@@ -1220,7 +1220,7 @@ rm -f acor_[a-df-z]*.dat acor_e[su]*.dat
 popd
 #rhbz#484055 make these shared across multiple applications
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}
-mv -f $RPM_BUILD_ROOT/%{basisinstdir}/share/autocorr $RPM_BUILD_ROOT/%{_datadir}/autocorr
+mv -f $RPM_BUILD_ROOT/%{baseinstdir}/share/autocorr $RPM_BUILD_ROOT/%{_datadir}/autocorr
 chmod 755 $RPM_BUILD_ROOT/%{_datadir}/autocorr
 
 %if %{langpacks}
@@ -1246,25 +1246,26 @@ ja      help    cjk             ko      help    cjk     \
 kn      nohelp  western         lt      nohelp  western \
 lv      nohelp  western         mai     nohelp  western \
 ml      nohelp  western         mr      nohelp  western \
-nb      help    western         nl      help    western \
-nn      help    western         nr      nohelp  western \
-nso     nohelp  western         or      nohelp  ctl     \
-pa-IN   nohelp  ctl             pl      help    western \
-pt      help    western         pt-BR   help    western \
-ro      nohelp  western         ru      help    western \
-sh      nohelp  western         si      help    ctl     \
-sk      help    western         sl      help    western \
-sr      nohelp  western         ss      nohelp  western \
-st      nohelp  western         sv      help    western \
-ta      nohelp  ctl             te      nohelp  western \
-th      nohelp  ctlseqcheck     tn      nohelp  western \
-tr      help    western         ts      nohelp  western \
-uk      help    western         ve      nohelp  western \
+ms      nohelp  western         nb      help    western \
+nl      help    western        	nn      help    western \
+nr      nohelp  western         nso     nohelp  western \
+or      nohelp  ctl            	pa-IN   nohelp  ctl     \
+pl      help    western         pt      help    western \
+pt-BR   help    western         ro      nohelp  western \
+ru      help    western        	sh      nohelp  western \
+si      help    ctl             sk      help    western \
+sl      help    western         sr      nohelp  western \
+ss      nohelp  western         st      nohelp  western \
+sv      help    western         ta      nohelp  ctl     \
+te      nohelp  western         th      nohelp  ctlseqcheck \
+tn      nohelp  western         tr      help    western \
+ts      nohelp  western         uk      help    western \
+ur      nohelp  western         ve      nohelp  western \
 xh      nohelp  western         zh-CN   help    cjk     \
 zh-TW   help    cjk             zu      nohelp  western \
 )
 
-tar xzf %{SOURCE21}
+tar xzf %{SOURCE5}
 
 i=0
 while [ $i -lt ${#langpackdetails[@]} ]; do
@@ -1286,7 +1287,7 @@ while [ $i -lt ${#langpackdetails[@]} ]; do
      sed -e "s/LANG/$lang/g" langpacks/libreoffice.langpack-ctl.template >> $lang.filelist
    fi
    if [ "$type" = "ctl" ]; then
-     rm -f $RPM_BUILD_ROOT/%{basisinstdir}/share/registry/ctl_$lang.xcd
+     rm -f $RPM_BUILD_ROOT/%{baseinstdir}/share/registry/ctl_$lang.xcd
    fi
    i=$[i+1]
 done
@@ -1297,10 +1298,15 @@ cat sh.filelist >> sr.filelist
 %endif
 
 #remove it in case we didn't build with gcj
-rm -f $RPM_BUILD_ROOT/%{basisinstdir}/program/classes/sandbox.jar
+rm -f $RPM_BUILD_ROOT/%{baseinstdir}/program/classes/sandbox.jar
 
 #remove dummy .dat files
-rm -f $RPM_BUILD_ROOT/%{basisinstdir}/program/root?.dat
+rm -f $RPM_BUILD_ROOT/%{baseinstdir}/program/root?.dat
+
+#remove if we do not build with kde support
+%if %{defined rhel}
+rm -f $RPM_BUILD_ROOT/%{baseinstdir}/program/kde-open-url
+%endif
 
 #set standard permissions for rpmlint
 find $RPM_BUILD_ROOT/%{baseinstdir} -exec chmod +w {} \;
@@ -1310,19 +1316,19 @@ find $RPM_BUILD_ROOT/%{baseinstdir} -type d -exec chmod 0755 {} \;
 mkdir -p $RPM_BUILD_ROOT/%{python_sitearch}
 pushd $RPM_BUILD_ROOT/%{python_sitearch}
 echo "import sys, os" > uno.py
-echo "sys.path.append('%{basisinstdir}/program')" >> uno.py
+echo "sys.path.append('%{baseinstdir}/program')" >> uno.py
 echo "os.putenv('URE_BOOTSTRAP', 'vnd.sun.star.pathname:%{baseinstdir}/program/fundamentalrc')" >> uno.py
-cat $RPM_BUILD_ROOT/%{basisinstdir}/program/uno.py >> uno.py
-rm -f $RPM_BUILD_ROOT/%{basisinstdir}/program/uno.py*
-mv -f $RPM_BUILD_ROOT/%{basisinstdir}/program/unohelper.py* .
+cat $RPM_BUILD_ROOT/%{baseinstdir}/program/uno.py >> uno.py
+rm -f $RPM_BUILD_ROOT/%{baseinstdir}/program/uno.py*
+mv -f $RPM_BUILD_ROOT/%{baseinstdir}/program/unohelper.py* .
 popd
 
 # rhbz#477435 package opensymbol separately
-pushd $RPM_BUILD_ROOT/%{basisinstdir}/share/fonts/truetype
+pushd $RPM_BUILD_ROOT/%{baseinstdir}/share/fonts/truetype
 install -d -m 0755 %{buildroot}%{_fontdir}
 install -p -m 0644 *.ttf %{buildroot}%{_fontdir}
 popd
-rm -rf $RPM_BUILD_ROOT/%{basisinstdir}/share/fonts
+rm -rf $RPM_BUILD_ROOT/%{baseinstdir}/share/fonts
 
 #ensure that no sneaky un-prelinkable, un-fpic or non executable shared libs 
 #have snuck through
@@ -1380,12 +1386,12 @@ echo \#\!/bin/sh > $RPM_BUILD_ROOT/%{_bindir}/oobase
 echo exec libreoffice --base \"\$@\" >> $RPM_BUILD_ROOT/%{_bindir}/oobase
 chmod a+x $RPM_BUILD_ROOT/%{_bindir}/oobase
 
-cp -f %{SOURCE22} $RPM_BUILD_ROOT/%{_bindir}/unopkg
+cp -f %{SOURCE6} $RPM_BUILD_ROOT/%{_bindir}/unopkg
 sed -i -e "s/LAUNCHER/unopkg/g" $RPM_BUILD_ROOT/%{_bindir}/unopkg
 sed -i -e "s/BRAND/libreoffice/g" $RPM_BUILD_ROOT/%{_bindir}/unopkg
 chmod a+x $RPM_BUILD_ROOT/%{_bindir}/unopkg
 
-cp -f %{SOURCE22} $RPM_BUILD_ROOT/%{_bindir}/libreoffice
+cp -f %{SOURCE6} $RPM_BUILD_ROOT/%{_bindir}/libreoffice
 sed -i -e "s/LAUNCHER/soffice/g" $RPM_BUILD_ROOT/%{_bindir}/libreoffice
 sed -i -e "s/BRAND/libreoffice/g" $RPM_BUILD_ROOT/%{_bindir}/libreoffice
 chmod a+x $RPM_BUILD_ROOT/%{_bindir}/libreoffice
@@ -1416,13 +1422,12 @@ for app in base calc draw impress math writer; do
     echo "TryExec=oo$app" >> $app.desktop
 done
 # rhbz#156677# / rhbz#186515#
-echo "NoDisplay=true" >> math.desktop
 echo "NoDisplay=true" >> startcenter.desktop
 # rhbz#491159 temporarily remove NoDisplay=true from qstart.desktop
 sed -i -e "/NoDisplay=true/d" qstart.desktop
 # relocate the .desktop and icon files
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/applications
-for app in base calc draw impress javafilter math startcenter writer; do
+for app in base %{?with_binfilter:binfilter} calc draw impress javafilter math startcenter writer; do
     desktop-file-validate $app.desktop
     cp -p $app.desktop $RPM_BUILD_ROOT/%{_datadir}/applications/libreoffice-$app.desktop
 done
@@ -1435,7 +1440,7 @@ rm -rf icons/gnome applications application-registry
 #relocate the rest of them
 for icon in `find icons -type f`; do
     mkdir -p $RPM_BUILD_ROOT/%{_datadir}/`dirname $icon`
-    cp -p $icon $RPM_BUILD_ROOT/%{_datadir}/`echo $icon | sed -e s@office$ICONVERSION@office@`
+    cp -p $icon $RPM_BUILD_ROOT/%{_datadir}/`echo $icon | sed -e s@office$ICONVERSION@office@ | sed -e s@office$PRODUCTVERSION@office@`
 done
 mkdir -p $RPM_BUILD_ROOT/%{_datadir}/mime-info
 cp -p mime-info/libreoffice$PRODUCTVERSION.keys $RPM_BUILD_ROOT/%{_datadir}/mime-info/libreoffice.keys
@@ -1448,35 +1453,20 @@ popd
 rm -rf $RPM_BUILD_ROOT/%{baseinstdir}/readmes
 rm -rf $RPM_BUILD_ROOT/%{baseinstdir}/licenses
 
-mkdir -p $RPM_BUILD_ROOT/%{basisinstdir}/share/psprint/driver
-cp -p psprint_config/configuration/ppds/SGENPRT.PS $RPM_BUILD_ROOT/%{basisinstdir}/share/psprint/driver/SGENPRT.PS
+mkdir -p $RPM_BUILD_ROOT/%{baseinstdir}/share/psprint/driver
+cp -p psprint_config/configuration/ppds/SGENPRT.PS $RPM_BUILD_ROOT/%{baseinstdir}/share/psprint/driver/SGENPRT.PS
 
 # rhbz#452385 to auto have postgres in classpath if subsequently installed
 # rhbz#465664 to get lucene working for functional help
-sed -i -e "s#URE_MORE_JAVA_CLASSPATH_URLS.*#& file:///usr/share/java/lucene.jar file:///usr/share/java/lucene-contrib/lucene-analyzers.jar file:///usr/share/java/postgresql-jdbc.jar#" $RPM_BUILD_ROOT/%{basisinstdir}/program/fundamentalbasisrc
+sed -i -e "s#URE_MORE_JAVA_CLASSPATH_URLS.*#& file:///usr/share/java/lucene.jar file:///usr/share/java/lucene-contrib/lucene-analyzers.jar file:///usr/share/java/postgresql-jdbc.jar#" $RPM_BUILD_ROOT/%{baseinstdir}/program/fundamentalrc
 
 export DESTDIR=$RPM_BUILD_ROOT
-install-gdb-printers -a %{_datadir}/gdb/auto-load%{baseinstdir} -c -p %{_datadir}/libreoffice/gdb
-# fix arch-dependent library suffix
-cd solenv/gdb
-cat <<EOF > dllpostfix.mk
-PRJ=..
-.INCLUDE : settings.mk
-print-DLLPOSTFIX :
-    @echo \$(DLLPOSTFIX)
-EOF
-libsuffix=`dmake -f dllpostfix.mk print-DLLPOSTFIX`
-for f in `find $RPM_BUILD_ROOT/%{_datadir}/gdb/auto-load%{baseinstdir} -type f -name '*lo-gdb.py'`; do
-    mv "$f" "${f%lo-gdb.py}${libsuffix}-gdb.py"
-done
+install-gdb-printers -a %{_datadir}/gdb/auto-load%{baseinstdir} -c -i %{baseinstdir} -p %{_datadir}/libreoffice/gdb
+
 
 %check
-source ./Linux*Env.Set.sh
-cd test
-build && deliver -link
-cd ../smoketestdoc
-build && deliver -link
-cd ../smoketestoo_native
+source ./Env.Host.sh
+cd smoketestoo_native
 unset WITH_LANG
 #JFW_PLUGIN_DO_NOT_CHECK_ACCESSIBILITY="1" works around flawed accessibility check
 #SAL_USE_VCLPLUGIN="svp" uses the headless plugin for these tests
@@ -1495,405 +1485,376 @@ rm -rf $RPM_BUILD_ROOT
 
 %files core
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/help
-%docdir %{basisinstdir}/help/en
-%dir %{basisinstdir}/help/en
-%{basisinstdir}/help/en/default.css
-%{basisinstdir}/help/en/err.html
-%{basisinstdir}/help/en/highcontrast1.css
-%{basisinstdir}/help/en/highcontrast2.css
-%{basisinstdir}/help/en/highcontrastblack.css
-%{basisinstdir}/help/en/highcontrastwhite.css
-%{basisinstdir}/help/en/sbasic.*
-%{basisinstdir}/help/en/schart.*
-%{basisinstdir}/help/en/shared.*
-%{basisinstdir}/help/idxcaption.xsl
-%{basisinstdir}/help/idxcontent.xsl
-%{basisinstdir}/help/main_transform.xsl
-%{basisinstdir}/presets
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/addin
-%{basisinstdir}/program/basprov%{SOPOST}.uno.so
-%{basisinstdir}/program/canvasfactory.uno.so
-%{basisinstdir}/program/cde-open-url
-%dir %{basisinstdir}/program/classes
-%{basisinstdir}/program/classes/agenda.jar                
-%{basisinstdir}/program/classes/commonwizards.jar
-%{basisinstdir}/program/classes/fax.jar
-%{basisinstdir}/program/classes/form.jar
-%{basisinstdir}/program/classes/query.jar          
-%{basisinstdir}/program/classes/letter.jar          
-%{basisinstdir}/program/classes/LuceneHelpWrapper.jar
-%{basisinstdir}/program/classes/officebean.jar
-%{basisinstdir}/program/classes/report.jar
-%{basisinstdir}/program/classes/saxon9.jar
-%{basisinstdir}/program/classes/ScriptFramework.jar
-%{basisinstdir}/program/classes/ScriptProviderForJava.jar
-%{basisinstdir}/program/classes/table.jar
-%{basisinstdir}/program/classes/unoil.jar
-%{basisinstdir}/program/classes/web.jar
-%{basisinstdir}/program/classes/XMergeBridge.jar
-%{basisinstdir}/program/classes/xmerge.jar
-%{basisinstdir}/program/classes/XSLTFilter.jar
-%{basisinstdir}/program/classes/XSLTValidate.jar
-%{basisinstdir}/program/cmdmail.uno.so
-%{basisinstdir}/program/deployment%{SOPOST}.uno.so
-%{basisinstdir}/program/deploymentgui%{SOPOST}.uno.so
-%{basisinstdir}/program/dlgprov%{SOPOST}.uno.so
-%{basisinstdir}/program/fastsax.uno.so
-%{basisinstdir}/program/fpicker.uno.so
-%{basisinstdir}/program/fps_gnome.uno.so
-%{basisinstdir}/program/fps_office.uno.so
-%{basisinstdir}/program/fundamentalbasisrc
-%{basisinstdir}/program/gnome-open-url
-%{basisinstdir}/program/gnome-open-url.bin
-%{basisinstdir}/program/hatchwindowfactory.uno.so
-%{basisinstdir}/program/i18nsearch.uno.so
-%{basisinstdir}/program/kde-open-url
-%{basisinstdir}/program/legacy_binfilters.rdb
-%{basisinstdir}/program/libacc%{SOPOST}.so
-%{basisinstdir}/program/libadabas%{SOPOST}.so
-%{basisinstdir}/program/libavmedia*.so
-%{basisinstdir}/program/libbasctl%{SOPOST}.so
-%{basisinstdir}/program/libbf_sb%{SOPOST}.so
-%{basisinstdir}/program/libbf_frm%{SOPOST}.so
-%{basisinstdir}/program/libbf_go%{SOPOST}.so
-%{basisinstdir}/program/libbf_migratefilter%{SOPOST}.so
-%{basisinstdir}/program/libbf_ofa%{SOPOST}.so
-%{basisinstdir}/program/libbf_sch%{SOPOST}.so
-%{basisinstdir}/program/libbf_sd%{SOPOST}.so
-%{basisinstdir}/program/libbf_so%{SOPOST}.so
-%{basisinstdir}/program/libbf_svt%{SOPOST}.so
-%{basisinstdir}/program/libbf_svx%{SOPOST}.so
-%{basisinstdir}/program/libbf_wrapper%{SOPOST}.so
-%{basisinstdir}/program/libbf_xo%{SOPOST}.so
-%{basisinstdir}/program/libbib%{SOPOST}.so
-%{basisinstdir}/program/libbindet%{SOPOST}.so
-%{basisinstdir}/program/libcached1.so
-%{basisinstdir}/program/libcanvastools%{SOPOST}.so
-%{basisinstdir}/program/libchart*%{SOPOST}.so
-%{basisinstdir}/program/libcollator_data.so
-%{basisinstdir}/program/libcppcanvas%{SOPOST}.so
-%{basisinstdir}/program/libctl%{SOPOST}.so
-%{basisinstdir}/program/libcui%{SOPOST}.so
-%{basisinstdir}/program/libdba%{SOPOST}.so
-%{basisinstdir}/program/libdbase%{SOPOST}.so
-%{basisinstdir}/program/libdbaxml%{SOPOST}.so
-%{basisinstdir}/program/libdbmm%{SOPOST}.so
-%{basisinstdir}/program/libdbpool2.so
-%{basisinstdir}/program/libdbtools%{SOPOST}.so
-%{basisinstdir}/program/libdbu%{SOPOST}.so
-%{basisinstdir}/program/libdeploymentmisc%{SOPOST}.so
-%{basisinstdir}/program/libdesktop_detector%{SOPOST}.so
-%{basisinstdir}/program/libdict_ja.so
-%{basisinstdir}/program/libdict_zh.so
-%{basisinstdir}/program/libdrawinglayer%{SOPOST}.so
-%{basisinstdir}/program/libediteng%{SOPOST}.so
-%{basisinstdir}/program/libembobj.so
-%{basisinstdir}/program/libemboleobj.so
-%{basisinstdir}/program/libevoab*.so
-%{basisinstdir}/program/libevtatt.so
-%{basisinstdir}/program/libegi%{SOPOST}.so    
-%{basisinstdir}/program/libeme%{SOPOST}.so
-%{basisinstdir}/program/libepb%{SOPOST}.so
-%{basisinstdir}/program/libepg%{SOPOST}.so    
-%{basisinstdir}/program/libepp%{SOPOST}.so
-%{basisinstdir}/program/libeps%{SOPOST}.so    
-%{basisinstdir}/program/libept%{SOPOST}.so
-%{basisinstdir}/program/libera%{SOPOST}.so    
-%{basisinstdir}/program/libeti%{SOPOST}.so
-%{basisinstdir}/program/libexp%{SOPOST}.so    
-%{basisinstdir}/program/libicd%{SOPOST}.so
-%{basisinstdir}/program/libicg%{SOPOST}.so
-%{basisinstdir}/program/libidx%{SOPOST}.so
-%{basisinstdir}/program/libime%{SOPOST}.so
-%{basisinstdir}/program/libindex_data.so
-%{basisinstdir}/program/libipb%{SOPOST}.so
-%{basisinstdir}/program/libipd%{SOPOST}.so
-%{basisinstdir}/program/libips%{SOPOST}.so
-%{basisinstdir}/program/libipt%{SOPOST}.so
-%{basisinstdir}/program/libipx%{SOPOST}.so
-%{basisinstdir}/program/libira%{SOPOST}.so
-%{basisinstdir}/program/libitg%{SOPOST}.so
-%{basisinstdir}/program/libiti%{SOPOST}.so
-%{basisinstdir}/program/libofficebean.so
-%{basisinstdir}/program/liboooimprovecore%{SOPOST}.so
-%{basisinstdir}/program/libfile%{SOPOST}.so
-%{basisinstdir}/program/libfilterconfig1.so
-%{basisinstdir}/program/libflat%{SOPOST}.so
-%{basisinstdir}/program/libfrm%{SOPOST}.so
-%{basisinstdir}/program/libguesslang%{SOPOST}.so
-%{basisinstdir}/program/libhelplinker%{SOPOST}.so
-%{basisinstdir}/program/libhyphen%{SOPOST}.so
-%{basisinstdir}/program/libi18nregexpgcc3.so
-%{basisinstdir}/program/libjdbc%{SOPOST}.so
-%{basisinstdir}/program/liblegacy_binfilters%{SOPOST}.so
-%{basisinstdir}/program/liblng%{SOPOST}.so
-%{basisinstdir}/program/liblog%{SOPOST}.so
-%{basisinstdir}/program/liblocaledata_en.so
-%{basisinstdir}/program/liblocaledata_es.so
-%{basisinstdir}/program/liblocaledata_euro.so
-%{basisinstdir}/program/liblocaledata_others.so
-%{basisinstdir}/program/libmcnttype.so
-%{basisinstdir}/program/libmozbootstrap.so
-%{basisinstdir}/program/libmsfilter%{SOPOST}.so
-%{basisinstdir}/program/libmtfrenderer.uno.so
-%{basisinstdir}/program/libmysql%{SOPOST}.so
-%{basisinstdir}/program/libodbc%{SOPOST}.so
-%{basisinstdir}/program/libodbcbase%{SOPOST}.so
-%{basisinstdir}/program/liboffacc%{SOPOST}.so
-%{basisinstdir}/program/liboox%{SOPOST}.so
-%{basisinstdir}/program/libpcr%{SOPOST}.so
-%{basisinstdir}/program/libpdffilter%{SOPOST}.so
-%{basisinstdir}/program/libpl%{SOPOST}.so
-%{basisinstdir}/program/libpreload%{SOPOST}.so
-%{basisinstdir}/program/libprotocolhandler%{SOPOST}.so
-%{basisinstdir}/program/libqstart_gtk%{SOPOST}.so
-%{basisinstdir}/program/librecentfile.so
-%{basisinstdir}/program/libres%{SOPOST}.so
-%{basisinstdir}/program/libsax%{SOPOST}.so
-%{basisinstdir}/program/libscn%{SOPOST}.so
-%{basisinstdir}/program/libscriptframe.so
-%{basisinstdir}/program/libsd%{SOPOST}.so
-%{basisinstdir}/program/libsdfilt%{SOPOST}.so
-%{basisinstdir}/program/libsdbc2.so
-%{basisinstdir}/program/libsdbt%{SOPOST}so
-%{basisinstdir}/program/libsdd%{SOPOST}.so
-%{basisinstdir}/program/libsdui%{SOPOST}.so
-%{basisinstdir}/program/libspa%{SOPOST}.so
-%{basisinstdir}/program/libspell%{SOPOST}.so
-%{basisinstdir}/program/libsrtrs1.so
-%{basisinstdir}/program/libsts%{SOPOST}.so
-%{basisinstdir}/program/libsvx%{SOPOST}.so
-%{basisinstdir}/program/libsvxcore%{SOPOST}.so
-%{basisinstdir}/program/libsw%{SOPOST}.so
-%{basisinstdir}/program/libtextconv_dict.so
-%{basisinstdir}/program/libtextconversiondlgs%{SOPOST}.so
-%{basisinstdir}/program/libtvhlp1.so
-%{basisinstdir}/program/libodfflatxml%{SOPOST}.so
-%{basisinstdir}/program/libucbhelper4gcc3.so
-%{basisinstdir}/program/libucpchelp1.so
-%{basisinstdir}/program/libucpdav1.so
-%{basisinstdir}/program/libucpftp1.so
-%{basisinstdir}/program/libucphier1.so
-%{basisinstdir}/program/libucppkg1.so
-%{basisinstdir}/program/libunordf%{SOPOST}.so
-%{basisinstdir}/program/libunopkgapp.so
-%{basisinstdir}/program/libunoxml%{SOPOST}.so
-%{basisinstdir}/program/libupdchk%{SOPOST}.so
-%{basisinstdir}/program/libuui%{SOPOST}.so
-%{basisinstdir}/program/libvbahelper%{SOPOST}.so
-%{basisinstdir}/program/libvclplug_gen%{SOPOST}.so
-%{basisinstdir}/program/libvclplug_gtk%{SOPOST}.so
+%dir %{baseinstdir}
+%dir %{baseinstdir}/help
+%docdir %{baseinstdir}/help/en
+%dir %{baseinstdir}/help/en
+%{baseinstdir}/help/en/default.css
+%{baseinstdir}/help/en/err.html
+%{baseinstdir}/help/en/highcontrast1.css
+%{baseinstdir}/help/en/highcontrast2.css
+%{baseinstdir}/help/en/highcontrastblack.css
+%{baseinstdir}/help/en/highcontrastwhite.css
+%{baseinstdir}/help/en/sbasic.*
+%{baseinstdir}/help/en/schart.*
+%{baseinstdir}/help/en/shared.*
+%{baseinstdir}/help/idxcaption.xsl
+%{baseinstdir}/help/idxcontent.xsl
+%{baseinstdir}/help/main_transform.xsl
+%{baseinstdir}/presets
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/addin
+%{baseinstdir}/program/basprov.uno.so
+%{baseinstdir}/program/canvasfactory.uno.so
+%{baseinstdir}/program/cde-open-url
+%dir %{baseinstdir}/program/classes
+%{baseinstdir}/program/classes/agenda.jar
+%{baseinstdir}/program/classes/commonwizards.jar
+%{baseinstdir}/program/classes/fax.jar
+%{baseinstdir}/program/classes/form.jar
+%{baseinstdir}/program/classes/query.jar
+%{baseinstdir}/program/classes/letter.jar
+%{baseinstdir}/program/classes/LuceneHelpWrapper.jar
+%{baseinstdir}/program/classes/officebean.jar
+%{baseinstdir}/program/classes/report.jar
+%{baseinstdir}/program/classes/saxon9.jar
+%{baseinstdir}/program/classes/ScriptFramework.jar
+%{baseinstdir}/program/classes/ScriptProviderForJava.jar
+%{baseinstdir}/program/classes/table.jar
+%{baseinstdir}/program/classes/unoil.jar
+%{baseinstdir}/program/classes/web.jar
+%{baseinstdir}/program/classes/XMergeBridge.jar
+%{baseinstdir}/program/classes/xmerge.jar
+%{baseinstdir}/program/classes/XSLTFilter.jar
+%{baseinstdir}/program/classes/XSLTValidate.jar
+%{baseinstdir}/program/cmdmail.uno.so
+%{baseinstdir}/program/libdeployment.so
+%{baseinstdir}/program/libdeploymentgui.so
+%{baseinstdir}/program/dlgprov.uno.so
+%{baseinstdir}/program/expwrap.uno.so
+%{baseinstdir}/program/fastsax.uno.so
+%{baseinstdir}/program/fpicker.uno.so
+%{baseinstdir}/program/fps_office.uno.so
+%{baseinstdir}/program/gengal
+%{baseinstdir}/program/gengal.bin
+%{baseinstdir}/program/gnome-open-url
+%{baseinstdir}/program/gnome-open-url.bin
+%{baseinstdir}/program/hatchwindowfactory.uno.so
+%{baseinstdir}/program/i18nsearch.uno.so
+%{baseinstdir}/program/libacclo.so
+%{baseinstdir}/program/libavmedia*.so
+%{baseinstdir}/program/libbasctllo.so
+%{baseinstdir}/program/libbiblo.so
+%{baseinstdir}/program/libcached1.so
+%{baseinstdir}/program/libcanvastoolslo.so
+%{baseinstdir}/program/libchart*lo.so
+%{baseinstdir}/program/libcollator_data.so
+%{baseinstdir}/program/libcppcanvaslo.so
+%{baseinstdir}/program/libctllo.so
+%{baseinstdir}/program/libcuilo.so
+%{baseinstdir}/program/libdbalo.so
+%{baseinstdir}/program/libdbaselo.so
+%{baseinstdir}/program/libdbaxmllo.so
+%{baseinstdir}/program/libdbmmlo.so
+%{baseinstdir}/program/libdbpool2.so
+%{baseinstdir}/program/libdbtoolslo.so
+%{baseinstdir}/program/libdbulo.so
+%{baseinstdir}/program/libdeploymentmisclo.so
+%{baseinstdir}/program/libdesktop_detectorlo.so
+%{baseinstdir}/program/libdict_ja.so
+%{baseinstdir}/program/libdict_zh.so
+%{baseinstdir}/program/libdrawinglayerlo.so
+%{baseinstdir}/program/libeditenglo.so
+%{baseinstdir}/program/libembobj.so
+%{baseinstdir}/program/libemboleobj.so
+%{baseinstdir}/program/libevoab*.so
+%{baseinstdir}/program/libevtattlo.so
+%{baseinstdir}/program/libegilo.so
+%{baseinstdir}/program/libemelo.so
+%{baseinstdir}/program/libepblo.so
+%{baseinstdir}/program/libepglo.so
+%{baseinstdir}/program/libepplo.so
+%{baseinstdir}/program/libepslo.so
+%{baseinstdir}/program/libeptlo.so
+%{baseinstdir}/program/liberalo.so
+%{baseinstdir}/program/libetilo.so
+%{baseinstdir}/program/libexplo.so
+%{baseinstdir}/program/libicdlo.so
+%{baseinstdir}/program/libicglo.so
+%{baseinstdir}/program/libidxlo.so
+%{baseinstdir}/program/libimelo.so
+%{baseinstdir}/program/libindex_data.so
+%{baseinstdir}/program/libipblo.so
+%{baseinstdir}/program/libipdlo.so
+%{baseinstdir}/program/libipslo.so
+%{baseinstdir}/program/libiptlo.so
+%{baseinstdir}/program/libipxlo.so
+%{baseinstdir}/program/libiralo.so
+%{baseinstdir}/program/libitglo.so
+%{baseinstdir}/program/libitilo.so
+%{baseinstdir}/program/libofficebeanlo.so
+%{baseinstdir}/program/liboooimprovecorelo.so
+%{baseinstdir}/program/libfilelo.so
+%{baseinstdir}/program/libfilterconfiglo.so
+%{baseinstdir}/program/libflatlo.so
+%{baseinstdir}/program/libfrmlo.so
+%{baseinstdir}/program/libguesslanglo.so
+%{baseinstdir}/program/libhelplinkerlo.so
+%{baseinstdir}/program/libhyphenlo.so
+%{baseinstdir}/program/libi18nregexplo.so
+%{baseinstdir}/program/libjdbclo.so
+%{baseinstdir}/program/liblnglo.so
+%{baseinstdir}/program/libloglo.so
+%{baseinstdir}/program/liblocaledata_en.so
+%{baseinstdir}/program/liblocaledata_es.so
+%{baseinstdir}/program/liblocaledata_euro.so
+%{baseinstdir}/program/liblocaledata_others.so
+%{baseinstdir}/program/libmcnttype.so
+%{baseinstdir}/program/libmozbootstrap.so
+%{baseinstdir}/program/libmsfilterlo.so
+%{baseinstdir}/program/mtfrenderer.uno.so
+%{baseinstdir}/program/libmysqllo.so
+%{baseinstdir}/program/libodbclo.so
+%{baseinstdir}/program/libodbcbaselo.so
+%{baseinstdir}/program/liboffacclo.so
+%{baseinstdir}/program/libooxlo.so
+%{baseinstdir}/program/libpcrlo.so
+%{baseinstdir}/program/libpdffilterlo.so
+%{baseinstdir}/program/libpllo.so
+%{baseinstdir}/program/libprotocolhandlerlo.so
+%{baseinstdir}/program/libqstart_gtklo.so
+%{baseinstdir}/program/librecentfile.so
+%{baseinstdir}/program/libreslo.so
+%{baseinstdir}/program/libsaxlo.so
+%{baseinstdir}/program/libscnlo.so
+%{baseinstdir}/program/libscriptframe.so
+%{baseinstdir}/program/libsdlo.so
+%{baseinstdir}/program/libsdfiltlo.so
+%{baseinstdir}/program/libsdbc2.so
+%{baseinstdir}/program/libsdbtlo.so
+%{baseinstdir}/program/libsddlo.so
+%{baseinstdir}/program/libsduilo.so
+%{baseinstdir}/program/libspalo.so
+%{baseinstdir}/program/libspelllo.so
+%{baseinstdir}/program/libsrtrs1.so
+%{baseinstdir}/program/libsvxlo.so
+%{baseinstdir}/program/libsvxcorelo.so
+%{baseinstdir}/program/libswlo.so
+%{baseinstdir}/program/libtextconv_dict.so
+%{baseinstdir}/program/libtextconversiondlgslo.so
+%{baseinstdir}/program/libtvhlp1.so
+%{baseinstdir}/program/libodfflatxmllo.so
+%{baseinstdir}/program/libucbhelper4gcc3.so
+%{baseinstdir}/program/libucpchelp1.so
+%{baseinstdir}/program/libucpdav1.so
+%{baseinstdir}/program/libucpftp1.so
+%{baseinstdir}/program/libucphier1.so
+%{baseinstdir}/program/libucppkg1.so
+%{baseinstdir}/program/libunordflo.so
+%{baseinstdir}/program/libunopkgapp.so
+%{baseinstdir}/program/libunoxmllo.so
+%{baseinstdir}/program/libupdchklo.so
+%{baseinstdir}/program/libuuilo.so
+%{baseinstdir}/program/libvbahelperlo.so
+%{baseinstdir}/program/libvclplug_genlo.so
+%{baseinstdir}/program/libvclplug_gtklo.so
 %if %{undefined rhel} || 0%{?rhel} >= 7
-%{basisinstdir}/program/libwpgimport%{SOPOST}.so
+%{baseinstdir}/program/libwpgimportlo.so
 %endif
-%{basisinstdir}/program/libxmlfa%{SOPOST}.so
-%{basisinstdir}/program/libxmlfd%{SOPOST}.so
-%{basisinstdir}/program/libxmx%{SOPOST}.so
-%{basisinstdir}/program/libxof%{SOPOST}.so
-%{basisinstdir}/program/libxsec_fw.so
-%{basisinstdir}/program/libxsec_xmlsec.so
-%{basisinstdir}/program/libxsltdlg%{SOPOST}.so
-%{basisinstdir}/program/libxsltfilter%{SOPOST}.so
-%{basisinstdir}/program/libxstor.so
-%{basisinstdir}/program/migrationoo2.uno.so
-%{basisinstdir}/program/migrationoo3.uno.so
-%{basisinstdir}/program/msforms.uno.so
-%{basisinstdir}/program/nsplugin
-%{basisinstdir}/program/open-url
-%{basisinstdir}/program/offapi.rdb
-%{basisinstdir}/program/passwordcontainer.uno.so
-%{basisinstdir}/program/pagein
-%{basisinstdir}/program/pagein-common
-%{basisinstdir}/program/plugin
-%{basisinstdir}/program/pluginapp.bin
-%{basisinstdir}/program/productregistration.uno.so
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/avmediaen-US.res
-%{basisinstdir}/program/resource/accen-US.res
-%{basisinstdir}/program/resource/basctlen-US.res
-%{basisinstdir}/program/resource/bf_frmen-US.res
-%{basisinstdir}/program/resource/bf_ofaen-US.res
-%{basisinstdir}/program/resource/bf_schen-US.res
-%{basisinstdir}/program/resource/bf_sden-US.res
-%{basisinstdir}/program/resource/bf_svten-US.res
-%{basisinstdir}/program/resource/bf_svxen-US.res
-%{basisinstdir}/program/resource/biben-US.res
-%{basisinstdir}/program/resource/calen-US.res
-%{basisinstdir}/program/resource/chartcontrolleren-US.res
-%{basisinstdir}/program/resource/cuien-US.res
-%{basisinstdir}/program/resource/dbaen-US.res
-%{basisinstdir}/program/resource/dbmmen-US.res
-%{basisinstdir}/program/resource/dbuen-US.res
-%{basisinstdir}/program/resource/dbwen-US.res
-%{basisinstdir}/program/resource/deploymenten-US.res
-%{basisinstdir}/program/resource/deploymentguien-US.res
-%{basisinstdir}/program/resource/dkten-US.res
-%{basisinstdir}/program/resource/editengen-US.res
-%{basisinstdir}/program/resource/epsen-US.res
-%{basisinstdir}/program/resource/euren-US.res
-%{basisinstdir}/program/resource/fps_officeen-US.res
-%{basisinstdir}/program/resource/frmen-US.res
-%{basisinstdir}/program/resource/fween-US.res
-%{basisinstdir}/program/resource/galen-US.res
-%{basisinstdir}/program/resource/impen-US.res
-%{basisinstdir}/program/resource/ofaen-US.res
-%{basisinstdir}/program/resource/pcren-US.res
-%{basisinstdir}/program/resource/pdffilteren-US.res
-%{basisinstdir}/program/resource/preloaden-US.res
-%{basisinstdir}/program/resource/productregistrationen-US.res
-%{basisinstdir}/program/resource/sanen-US.res
-%{basisinstdir}/program/resource/sben-US.res
-%{basisinstdir}/program/resource/sden-US.res
-%{basisinstdir}/program/resource/sfxen-US.res
-%{basisinstdir}/program/resource/spaen-US.res
-%{basisinstdir}/program/resource/sdbten-US.res
-%{basisinstdir}/program/resource/svlen-US.res
-%{basisinstdir}/program/resource/svten-US.res
-%{basisinstdir}/program/resource/svxen-US.res
-%{basisinstdir}/program/resource/swen-US.res
-%{basisinstdir}/program/resource/textconversiondlgsen-US.res
-%{basisinstdir}/program/resource/tken-US.res
-%{basisinstdir}/program/resource/tplen-US.res
-%{basisinstdir}/program/resource/uuien-US.res
-%{basisinstdir}/program/resource/updchken-US.res
-%{basisinstdir}/program/resource/upden-US.res
-%{basisinstdir}/program/resource/vclen-US.res
-%{basisinstdir}/program/resource/wzien-US.res
-%{basisinstdir}/program/resource/xmlsecen-US.res
-%{basisinstdir}/program/resource/xsltdlgen-US.res
-%{basisinstdir}/program/sax.uno.so
-%{basisinstdir}/program/senddoc
-%{basisinstdir}/program/services.rdb
-%{basisinstdir}/program/simplecanvas.uno.so
-%{basisinstdir}/program/slideshow.uno.so
-%{basisinstdir}/program/libsofficeapp.so
-%{basisinstdir}/program/spadmin.bin
-%{basisinstdir}/program/stringresource%{SOPOST}.uno.so
-%{basisinstdir}/program/syssh.uno.so
-%{basisinstdir}/program/ucpexpand1.uno.so
-%{basisinstdir}/program/ucpext.uno.so
-%{basisinstdir}/program/ucptdoc1.uno.so
-%{basisinstdir}/program/unorc
-%{basisinstdir}/program/updatefeed.uno.so
-%{basisinstdir}/ure-link
-%{basisinstdir}/program/uri-encode
-%{basisinstdir}/program/vbaevents%{SOPOST}.uno.so
-%{basisinstdir}/program/vclcanvas.uno.so
-%{basisinstdir}/program/versionrc
-%{basisinstdir}/program/cairocanvas.uno.so
-%dir %{basisinstdir}/share
-%dir %{basisinstdir}/share/Scripts
-%{basisinstdir}/share/Scripts/java
-%{basisinstdir}/share/autotext
-%{basisinstdir}/share/basic
-%dir %{basisinstdir}/share/config
-%{basisinstdir}/share/config/images.zip
-%{basisinstdir}/share/config/images_crystal.zip
-%{basisinstdir}/share/config/images_hicontrast.zip
-%{basisinstdir}/share/config/images_oxygen.zip
-%{basisinstdir}/share/config/images_tango.zip
-%{basisinstdir}/share/config/javasettingsunopkginstall.xml
-%{basisinstdir}/share/config/psetup.xpm
-%{basisinstdir}/share/config/psetupl.xpm
-%dir %{basisinstdir}/share/config/soffice.cfg
-%{basisinstdir}/share/config/soffice.cfg/modules
-%{basisinstdir}/share/config/symbol
-%{basisinstdir}/share/config/webcast
-%{basisinstdir}/share/config/wizard
-%dir %{basisinstdir}/share/dtd
-%{basisinstdir}/share/dtd/officedocument
-%{basisinstdir}/share/gallery
-%dir %{basisinstdir}/share/psprint
-%config %{basisinstdir}/share/psprint/psprint.conf
-%{basisinstdir}/share/psprint/driver
-%dir %{basisinstdir}/share/registry
-%{basisinstdir}/share/registry/binfilter.xcd
-%{basisinstdir}/share/registry/gnome.xcd
-%{basisinstdir}/share/registry/lingucomponent.xcd
-%{basisinstdir}/share/registry/main.xcd
-%{basisinstdir}/share/registry/oo-ad-ldap.xcd.sample
-%{basisinstdir}/share/registry/oo-ldap.xcd.sample
-%{basisinstdir}/share/registry/Langpack-en-US.xcd
-%dir %{basisinstdir}/share/registry/res
-%{basisinstdir}/share/registry/res/fcfg_langpack_en-US.xcd
-%dir %{basisinstdir}/share/samples
-%{basisinstdir}/share/samples/en-US
-%dir %{basisinstdir}/share/template
-%{basisinstdir}/share/template/en-US
-%dir %{basisinstdir}/share/template/common
-%{basisinstdir}/share/template/common/layout
-%{basisinstdir}/share/template/wizard
-%dir %{basisinstdir}/share/wordbook
-%{basisinstdir}/share/wordbook/en-US
-%dir %{basisinstdir}/share/xslt
-%{basisinstdir}/share/xslt/common
-%dir %{basisinstdir}/share/xslt/export
-%{basisinstdir}/share/xslt/export/common
-%{basisinstdir}/share/xslt/export/spreadsheetml
-%{basisinstdir}/share/xslt/export/wordml
-%dir %{basisinstdir}/share/xslt/import
-%{basisinstdir}/share/xslt/import/common
-%{basisinstdir}/share/xslt/import/spreadsheetml
-%{basisinstdir}/share/xslt/import/wordml
-%{basisinstdir}/program/liblnth%{SOPOST}.so
+%{baseinstdir}/program/libxmlfalo.so
+%{baseinstdir}/program/libxmlfdlo.so
+%{baseinstdir}/program/libxmxlo.so
+%{baseinstdir}/program/libxoflo.so
+%{baseinstdir}/program/libxsec_fw.so
+%{baseinstdir}/program/libxsec_xmlsec.so
+%{baseinstdir}/program/libxsltdlglo.so
+%{baseinstdir}/program/libxsltfilterlo.so
+%{baseinstdir}/program/libxstor.so
+%{baseinstdir}/program/migrationoo2.uno.so
+%{baseinstdir}/program/migrationoo3.uno.so
+%{baseinstdir}/program/msforms.uno.so
+%{baseinstdir}/program/nsplugin
+%{baseinstdir}/program/open-url
+%{baseinstdir}/program/types/offapi.rdb
+%{baseinstdir}/program/passwordcontainer.uno.so
+%{baseinstdir}/program/pagein-common
+%{baseinstdir}/program/plugin
+%{baseinstdir}/program/pluginapp.bin
+%dir %{baseinstdir}/program/resource
+%{baseinstdir}/program/resource/avmediaen-US.res
+%{baseinstdir}/program/resource/accen-US.res
+%{baseinstdir}/program/resource/basctlen-US.res
+%{baseinstdir}/program/resource/biben-US.res
+%{baseinstdir}/program/resource/calen-US.res
+%{baseinstdir}/program/resource/chartcontrolleren-US.res
+%{baseinstdir}/program/resource/cuien-US.res
+%{baseinstdir}/program/resource/dbaen-US.res
+%{baseinstdir}/program/resource/dbmmen-US.res
+%{baseinstdir}/program/resource/dbuen-US.res
+%{baseinstdir}/program/resource/dbwen-US.res
+%{baseinstdir}/program/resource/deploymenten-US.res
+%{baseinstdir}/program/resource/deploymentguien-US.res
+%{baseinstdir}/program/resource/dkten-US.res
+%{baseinstdir}/program/resource/editengen-US.res
+%{baseinstdir}/program/resource/epsen-US.res
+%{baseinstdir}/program/resource/euren-US.res
+%{baseinstdir}/program/resource/fps_officeen-US.res
+%{baseinstdir}/program/resource/frmen-US.res
+%{baseinstdir}/program/resource/fween-US.res
+%{baseinstdir}/program/resource/galen-US.res
+%{baseinstdir}/program/resource/impen-US.res
+%{baseinstdir}/program/resource/ofaen-US.res
+%{baseinstdir}/program/resource/pcren-US.res
+%{baseinstdir}/program/resource/pdffilteren-US.res
+%{baseinstdir}/program/resource/sanen-US.res
+%{baseinstdir}/program/resource/sben-US.res
+%{baseinstdir}/program/resource/sden-US.res
+%{baseinstdir}/program/resource/sfxen-US.res
+%{baseinstdir}/program/resource/spaen-US.res
+%{baseinstdir}/program/resource/sdbten-US.res
+%{baseinstdir}/program/resource/svlen-US.res
+%{baseinstdir}/program/resource/svten-US.res
+%{baseinstdir}/program/resource/svxen-US.res
+%{baseinstdir}/program/resource/swen-US.res
+%{baseinstdir}/program/resource/textconversiondlgsen-US.res
+%{baseinstdir}/program/resource/tken-US.res
+%{baseinstdir}/program/resource/tplen-US.res
+%{baseinstdir}/program/resource/uuien-US.res
+%{baseinstdir}/program/resource/updchken-US.res
+%{baseinstdir}/program/resource/upden-US.res
+%{baseinstdir}/program/resource/vclen-US.res
+%{baseinstdir}/program/resource/wzien-US.res
+%{baseinstdir}/program/resource/xmlsecen-US.res
+%{baseinstdir}/program/resource/xsltdlgen-US.res
+%{baseinstdir}/program/senddoc
+%{baseinstdir}/program/services/services.rdb
+%{baseinstdir}/program/simplecanvas.uno.so
+%{baseinstdir}/program/slideshow.uno.so
+%{baseinstdir}/program/libsofficeapp.so
+%{baseinstdir}/program/spadmin.bin
+%{baseinstdir}/program/stringresource.uno.so
+%{baseinstdir}/program/syssh.uno.so
+%{baseinstdir}/program/ucpcmis1.uno.so
+%{baseinstdir}/program/ucpexpand1.uno.so
+%{baseinstdir}/program/ucpext.uno.so
+%{baseinstdir}/program/ucptdoc1.uno.so
+%{baseinstdir}/program/unorc
+%{baseinstdir}/program/updatefeed.uno.so
+%{baseinstdir}/ure-link
+%{baseinstdir}/program/uri-encode
+%{baseinstdir}/program/vbaevents.uno.so
+%{baseinstdir}/program/vclcanvas.uno.so
+%{baseinstdir}/program/versionrc
+%{baseinstdir}/program/cairocanvas.uno.so
+%dir %{baseinstdir}/share
+%dir %{baseinstdir}/share/Scripts
+%{baseinstdir}/share/Scripts/java
+%{baseinstdir}/share/autotext
+%{baseinstdir}/share/basic
+%dir %{baseinstdir}/share/config
+%{baseinstdir}/share/config/images.zip
+%{baseinstdir}/share/config/images_crystal.zip
+%{baseinstdir}/share/config/images_hicontrast.zip
+%{baseinstdir}/share/config/images_oxygen.zip
+%{baseinstdir}/share/config/images_tango.zip
+%{baseinstdir}/share/config/javasettingsunopkginstall.xml
+%{baseinstdir}/share/config/psetup.xpm
+%{baseinstdir}/share/config/psetupl.xpm
+%dir %{baseinstdir}/share/config/soffice.cfg
+%{baseinstdir}/share/config/soffice.cfg/modules
+%{baseinstdir}/share/config/symbol
+%{baseinstdir}/share/config/webcast
+%{baseinstdir}/share/config/wizard
+%dir %{baseinstdir}/share/dtd
+%{baseinstdir}/share/dtd/officedocument
+%if %{defined rhel} && 0%{?rhel} < 7
+%{baseinstdir}/share/fingerprint
+%endif
+%{baseinstdir}/share/gallery
+%dir %{baseinstdir}/share/psprint
+%config %{baseinstdir}/share/psprint/psprint.conf
+%{baseinstdir}/share/psprint/driver
+%dir %{baseinstdir}/share/registry
+%{baseinstdir}/share/registry/gnome.xcd
+%{baseinstdir}/share/registry/lingucomponent.xcd
+%{baseinstdir}/share/registry/main.xcd
+%{baseinstdir}/share/registry/oo-ad-ldap.xcd.sample
+%{baseinstdir}/share/registry/oo-ldap.xcd.sample
+%{baseinstdir}/share/registry/Langpack-en-US.xcd
+%dir %{baseinstdir}/share/registry/res
+%{baseinstdir}/share/registry/res/fcfg_langpack_en-US.xcd
+%dir %{baseinstdir}/share/samples
+%{baseinstdir}/share/samples/en-US
+%dir %{baseinstdir}/share/template
+%{baseinstdir}/share/template/en-US
+%dir %{baseinstdir}/share/template/common
+%{baseinstdir}/share/template/common/layout
+%{baseinstdir}/share/template/wizard
+%dir %{baseinstdir}/share/wordbook
+%{baseinstdir}/share/wordbook/en-GB.dic
+%{baseinstdir}/share/wordbook/en-US.dic
+%{baseinstdir}/share/wordbook/sl.dic
+%{baseinstdir}/share/wordbook/technical.dic
+%dir %{baseinstdir}/share/xslt
+%{baseinstdir}/share/xslt/common
+%dir %{baseinstdir}/share/xslt/export
+%{baseinstdir}/share/xslt/export/common
+%{baseinstdir}/share/xslt/export/spreadsheetml
+%{baseinstdir}/share/xslt/export/wordml
+%dir %{baseinstdir}/share/xslt/import
+%{baseinstdir}/share/xslt/import/common
+%{baseinstdir}/share/xslt/import/spreadsheetml
+%{baseinstdir}/share/xslt/import/wordml
+%{baseinstdir}/program/liblnthlo.so
 %{_bindir}/unopkg
 #icons and mime
 %{_datadir}/icons/*/*/*/libreoffice*
 %{_datadir}/mime-info/libreoffice.*
-%{basisinstdir}/program/libxmlsecurity.so
+%{baseinstdir}/program/libxmlsecurity.so
 %{_datadir}/mime/packages/libreoffice.xml
-%{basisinstdir}/program/configmgr.uno.so
-%{basisinstdir}/program/desktopbe1.uno.so
-%{basisinstdir}/program/fsstorage.uno.so
-%{basisinstdir}/program/gconfbe1.uno.so
-%{basisinstdir}/program/i18npool.uno.so
-%{basisinstdir}/program/libbasegfx%{SOPOST}.so
-%{basisinstdir}/program/libcomphelpgcc3.so
-%{basisinstdir}/program/libfileacc.so
-%{basisinstdir}/program/libfwe%{SOPOST}.so
-%{basisinstdir}/program/libfwi%{SOPOST}.so
-%{basisinstdir}/program/libfwk%{SOPOST}.so
-%{basisinstdir}/program/libfwl%{SOPOST}.so
-%{basisinstdir}/program/libfwm%{SOPOST}.so
-%{basisinstdir}/program/libi18nisolang*.so
-%{basisinstdir}/program/libi18npaper*.so
-%{basisinstdir}/program/libi18nutilgcc3.so
-%{basisinstdir}/program/libpackage2.so
-%{basisinstdir}/program/libsb%{SOPOST}.so
-%{basisinstdir}/program/libsfx%{SOPOST}.so
-%{basisinstdir}/program/libsot%{SOPOST}.so
-%{basisinstdir}/program/libspl%{SOPOST}.so
-%{basisinstdir}/program/libspl_unx%{SOPOST}.so
-%{basisinstdir}/program/libsvl%{SOPOST}.so
-%{basisinstdir}/program/libsvt%{SOPOST}.so
-%{basisinstdir}/program/libtk%{SOPOST}.so
-%{basisinstdir}/program/libtl%{SOPOST}.so
-%{basisinstdir}/program/libucb1.so
-%{basisinstdir}/program/libucpfile1.so
-%{basisinstdir}/program/libutl%{SOPOST}.so
-%{basisinstdir}/program/libvcl%{SOPOST}.so
-%{basisinstdir}/program/libxcr%{SOPOST}.so
-%{basisinstdir}/program/libxo%{SOPOST}.so
-%{basisinstdir}/program/localebe1.uno.so
-%{basisinstdir}/program/ucpgio1.uno.so
-%{basisinstdir}/program/oovbaapi.rdb
+%{baseinstdir}/program/configmgr.uno.so
+%{baseinstdir}/program/desktopbe1.uno.so
+%{baseinstdir}/program/fsstorage.uno.so
+%{baseinstdir}/program/gconfbe1.uno.so
+%{baseinstdir}/program/i18npool.uno.so
+%{baseinstdir}/program/libbasegfxlo.so
+%{baseinstdir}/program/libcomphelpgcc3.so
+%{baseinstdir}/program/libfileacc.so
+%{baseinstdir}/program/libfwelo.so
+%{baseinstdir}/program/libfwilo.so
+%{baseinstdir}/program/libfwklo.so
+%{baseinstdir}/program/libfwllo.so
+%{baseinstdir}/program/libfwmlo.so
+%{baseinstdir}/program/libi18nisolang*.so
+%{baseinstdir}/program/libi18npaper*.so
+%{baseinstdir}/program/libi18nutilgcc3.so
+%{baseinstdir}/program/libpackage2.so
+%{baseinstdir}/program/libsblo.so
+%{baseinstdir}/program/libsfxlo.so
+%{baseinstdir}/program/libsotlo.so
+%{baseinstdir}/program/libspllo.so
+%{baseinstdir}/program/libspl_unxlo.so
+%{baseinstdir}/program/libsvllo.so
+%{baseinstdir}/program/libsvtlo.so
+%{baseinstdir}/program/libtklo.so
+%{baseinstdir}/program/libtllo.so
+%{baseinstdir}/program/libucb1.so
+%{baseinstdir}/program/libucpfile1.so
+%{baseinstdir}/program/libutllo.so
+%{baseinstdir}/program/libvcllo.so
+%{baseinstdir}/program/libxcrlo.so
+%{baseinstdir}/program/libxolo.so
+%{baseinstdir}/program/localebe1.uno.so
+%{baseinstdir}/program/ucpgio1.uno.so
+%{baseinstdir}/program/types/oovbaapi.rdb
 #share unopkg
-%dir %{baseinstdir}
-%{baseinstdir}/basis-link
-%dir %{baseinstdir}/share
 %dir %{baseinstdir}/share/extensions
 %{baseinstdir}/share/extensions/package.txt
-%dir %{baseinstdir}/program
 %{baseinstdir}/program/unopkg
 %{baseinstdir}/program/unopkg.bin
 %{baseinstdir}/program/bootstraprc
 %{baseinstdir}/program/fundamentalrc
 %{baseinstdir}/program/setuprc
-%{baseinstdir}/program/services.rdb
-%{baseinstdir}/program/versionrc
 %doc %{baseinstdir}/CREDITS.odt
 %doc %{baseinstdir}/LICENSE
 %doc %{baseinstdir}/LICENSE.odt
@@ -1906,12 +1867,9 @@ rm -rf $RPM_BUILD_ROOT
 %{baseinstdir}/program/spadmin
 %{baseinstdir}/program/unoinfo
 %{baseinstdir}/program/libnpsoplugin.so
-%{baseinstdir}/program/oosplash.bin
+%{baseinstdir}/program/oosplash
 %{baseinstdir}/program/shell/
-%dir %{baseinstdir}/share/config
 %{baseinstdir}/share/config/images_brand.zip
-%dir %{baseinstdir}/share/registry
-%{baseinstdir}/share/registry/brand.xcd
 %{baseinstdir}/share/xdg/
 %{baseinstdir}/program/redirectrc
 %{_datadir}/applications/libreoffice-startcenter.desktop
@@ -1947,31 +1905,29 @@ done
 
 %files base
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/sdatabase.*
-%dir %{basisinstdir}/program
-%dir %{basisinstdir}/program/classes
-%if %{undefined rhel} || 0%{?rhel} >= 7
-%{basisinstdir}/program/classes/hsqldb.jar
-%endif
-%{basisinstdir}/program/classes/sdbc_hsqldb.jar
-%{basisinstdir}/program/libabp%{SOPOST}.so
-%{basisinstdir}/program/libadabasui%{SOPOST}.so
-%{basisinstdir}/program/libdbp%{SOPOST}.so
-%{basisinstdir}/program/libhsqldb.so
-%{basisinstdir}/program/librpt*%{SOPOST}.so
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/abpen-US.res
-%{basisinstdir}/program/resource/adabasuien-US.res
-%{basisinstdir}/program/resource/cnren-US.res
-%{basisinstdir}/program/resource/dbpen-US.res
-%{basisinstdir}/program/resource/rpten-US.res
-%{basisinstdir}/program/resource/rptuien-US.res
-%{basisinstdir}/program/resource/sdbclen-US.res
-%{basisinstdir}/program/resource/sdberren-US.res
-%{basisinstdir}/share/registry/base.xcd
 %dir %{baseinstdir}
+%{baseinstdir}/help/en/sdatabase.*
 %dir %{baseinstdir}/program
+%dir %{baseinstdir}/program/classes
+%if %{undefined rhel} || 0%{?rhel} >= 7
+%{baseinstdir}/program/classes/hsqldb.jar
+%endif
+%{baseinstdir}/program/classes/sdbc_hsqldb.jar
+%{baseinstdir}/program/libabplo.so
+%{baseinstdir}/program/libadabasuilo.so
+%{baseinstdir}/program/libdbplo.so
+%{baseinstdir}/program/libhsqldb.so
+%{baseinstdir}/program/librpt*lo.so
+%dir %{baseinstdir}/program/resource
+%{baseinstdir}/program/resource/abpen-US.res
+%{baseinstdir}/program/resource/adabasuien-US.res
+%{baseinstdir}/program/resource/cnren-US.res
+%{baseinstdir}/program/resource/dbpen-US.res
+%{baseinstdir}/program/resource/rpten-US.res
+%{baseinstdir}/program/resource/rptuien-US.res
+%{baseinstdir}/program/resource/sdbclen-US.res
+%{baseinstdir}/program/resource/sdberren-US.res
+%{baseinstdir}/share/registry/base.xcd
 %{baseinstdir}/program/sbase
 %{_datadir}/applications/libreoffice-base.desktop
 %{_bindir}/oobase
@@ -1989,29 +1945,37 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files bsh
 %defattr(-,root,root,-)
-%{basisinstdir}/share/Scripts/beanshell
-%{baseinstdir}/share/extensions/script-provider-for-beanshell
+%{baseinstdir}/program/classes/ScriptProviderForBeanShell.jar
+%{baseinstdir}/program/services/scriptproviderforbeanshell.rdb
+%{baseinstdir}/share/Scripts/beanshell
 
 %files rhino
 %defattr(-,root,root,-)
-%{basisinstdir}/share/Scripts/javascript
-%{baseinstdir}/share/extensions/script-provider-for-javascript
+%{baseinstdir}/program/classes/js.jar
+%{baseinstdir}/program/classes/ScriptProviderForJavaScript.jar
+%{baseinstdir}/program/services/scriptproviderforjavascript.rdb
+%{baseinstdir}/share/Scripts/javascript
 
 %files wiki-publisher
 %defattr(-,root,root,-)
 %docdir %{baseinstdir}/share/extensions/wiki-publisher/license
 %{baseinstdir}/share/extensions/wiki-publisher
 
+%files nlpsolver
+%defattr(-,root,root,-)
+%docdir %{baseinstdir}/share/extensions/nlpsolver/help
+%{baseinstdir}/share/extensions/nlpsolver
+
 %files ogltrans
 %defattr(-,root,root,-)
 %dir %{baseinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/OGLTrans.uno.so
-%dir %{basisinstdir}/share/config
-%dir %{basisinstdir}/share/config/soffice.cfg
-%dir %{basisinstdir}/share/config/soffice.cfg/simpress
-%{basisinstdir}/share/config/soffice.cfg/simpress/transitions-ogl.xml
-%{basisinstdir}/share/registry/ogltrans.xcd
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/OGLTrans.uno.so
+%dir %{baseinstdir}/share/config
+%dir %{baseinstdir}/share/config/soffice.cfg
+%dir %{baseinstdir}/share/config/soffice.cfg/simpress
+%{baseinstdir}/share/config/soffice.cfg/simpress/transitions-ogl.xml
+%{baseinstdir}/share/registry/ogltrans.xcd
 
 %files presentation-minimizer
 %defattr(-,root,root,-)
@@ -2029,38 +1993,33 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 %{baseinstdir}/share/extensions/pdfimport
 
 %_font_pkg -n %{fontname} opens___.ttf
-%doc solver/%{OFFICEUPD}/unxlng*/bin/ure/LICENSE
-%dir %{_fontdir}
+%doc solver/unxlng*/bin/ure/LICENSE
 
 %files calc
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/scalc.*
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libanalysis%{SOPOST}.so
-%{basisinstdir}/program/libbf_sc%{SOPOST}.so
-%{basisinstdir}/program/libcalc%{SOPOST}.so
-%{basisinstdir}/program/libdate%{SOPOST}.so
-%{basisinstdir}/program/libfor%{SOPOST}.so
-%{basisinstdir}/program/libforui%{SOPOST}.so
-%{basisinstdir}/program/libsc%{SOPOST}.so
-%{basisinstdir}/program/libscd%{SOPOST}.so
-%{basisinstdir}/program/libscfilt%{SOPOST}.so
-%{basisinstdir}/program/libscui%{SOPOST}.so
-%{basisinstdir}/program/libsolver%{SOPOST}.so
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/analysisen-US.res
-%{basisinstdir}/program/resource/bf_scen-US.res
-%{basisinstdir}/program/resource/dateen-US.res
-%{basisinstdir}/program/resource/foren-US.res
-%{basisinstdir}/program/resource/foruien-US.res
-%{basisinstdir}/program/resource/scen-US.res
-%{basisinstdir}/program/resource/solveren-US.res
-%{basisinstdir}/program/vbaobj.uno.so
-%{basisinstdir}/share/registry/calc.xcd
-%{basisinstdir}/program/pagein-calc
 %dir %{baseinstdir}
+%{baseinstdir}/help/en/scalc.*
 %dir %{baseinstdir}/program
+%{baseinstdir}/program/libanalysislo.so
+%{baseinstdir}/program/libcalclo.so
+%{baseinstdir}/program/libdatelo.so
+%{baseinstdir}/program/libforlo.so
+%{baseinstdir}/program/libforuilo.so
+%{baseinstdir}/program/libsclo.so
+%{baseinstdir}/program/libscdlo.so
+%{baseinstdir}/program/libscfiltlo.so
+%{baseinstdir}/program/libscuilo.so
+%{baseinstdir}/program/libsolverlo.so
+%dir %{baseinstdir}/program/resource
+%{baseinstdir}/program/resource/analysisen-US.res
+%{baseinstdir}/program/resource/dateen-US.res
+%{baseinstdir}/program/resource/foren-US.res
+%{baseinstdir}/program/resource/foruien-US.res
+%{baseinstdir}/program/resource/scen-US.res
+%{baseinstdir}/program/resource/solveren-US.res
+%{baseinstdir}/program/vbaobj.uno.so
+%{baseinstdir}/share/registry/calc.xcd
+%{baseinstdir}/program/pagein-calc
 %{baseinstdir}/program/scalc
 %{_datadir}/applications/libreoffice-calc.desktop
 %{_bindir}/oocalc
@@ -2073,12 +2032,12 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files draw
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/sdraw.*
-%{basisinstdir}/share/registry/draw.xcd
-%{basisinstdir}/program/pagein-draw
 %dir %{baseinstdir}
 %dir %{baseinstdir}/program
+%{baseinstdir}/help/en/sdraw.*
+%{baseinstdir}/share/registry/draw.xcd
+%{baseinstdir}/program/libvisioimportlo.so
+%{baseinstdir}/program/pagein-draw
 %{baseinstdir}/program/sdraw
 %{_datadir}/applications/libreoffice-draw.desktop
 %{_bindir}/oodraw
@@ -2091,35 +2050,37 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files emailmerge
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/mailmerge.py*
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/mailmerge.py*
+%{baseinstdir}/program/msgbox.py*
+%{baseinstdir}/program/officehelper.py*
 
 %files writer
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/swriter.*
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libbf_sw%{SOPOST}.so
-%{basisinstdir}/program/libhwp.so
-%{basisinstdir}/program/liblwpft%{SOPOST}.so
-%{basisinstdir}/program/libmsword%{SOPOST}.so
-%if %{undefined rhel} || 0%{?rhel} >= 7
-%{basisinstdir}/program/libmsworks%{SOPOST}.so
-%endif
-%{basisinstdir}/program/libswd%{SOPOST}.so
-%{basisinstdir}/program/libswui%{SOPOST}.so
-%{basisinstdir}/program/libt602filter%{SOPOST}.so
-%{basisinstdir}/program/libwpft%{SOPOST}.so
-%{basisinstdir}/program/libwriterfilter%{SOPOST}.so
-%{basisinstdir}/program/vbaswobj.uno.so
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/bf_swen-US.res
-%{basisinstdir}/program/resource/t602filteren-US.res
-%{basisinstdir}/share/registry/writer.xcd
-%{basisinstdir}/program/pagein-writer
 %dir %{baseinstdir}
+%{baseinstdir}/help/en/swriter.*
 %dir %{baseinstdir}/program
+%{baseinstdir}/program/libdoctoklo.so
+%{baseinstdir}/program/libhwplo.so
+%{baseinstdir}/program/liblwpftlo.so
+%{baseinstdir}/program/libmswordlo.so
+%if %{undefined rhel} || 0%{?rhel} >= 7
+%{baseinstdir}/program/libmsworkslo.so
+%endif
+%{baseinstdir}/program/libooxmllo.so
+%{baseinstdir}/program/libresourcemodello.so
+%{baseinstdir}/program/librtftoklo.so
+%{baseinstdir}/program/libswdlo.so
+%{baseinstdir}/program/libswuilo.so
+%{baseinstdir}/program/libt602filterlo.so
+%{baseinstdir}/program/libwpftlo.so
+%{baseinstdir}/program/libwriterfilterlo.so
+%{baseinstdir}/program/vbaswobj.uno.so
+%dir %{baseinstdir}/program/resource
+%{baseinstdir}/program/resource/t602filteren-US.res
+%{baseinstdir}/share/registry/writer.xcd
+%{baseinstdir}/program/pagein-writer
 %{baseinstdir}/program/swriter
 %{_datadir}/applications/libreoffice-writer.desktop
 %{_bindir}/oowriter
@@ -2132,20 +2093,18 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files impress
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/simpress.*
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libanimcore.so
-%{basisinstdir}/program/libplaceware*.so
-%dir %{basisinstdir}/share/config
-%dir %{basisinstdir}/share/config/soffice.cfg
-%dir %{basisinstdir}/share/config/soffice.cfg/simpress
-%{basisinstdir}/share/config/soffice.cfg/simpress/effects.xml
-%{basisinstdir}/share/config/soffice.cfg/simpress/transitions.xml
-%{basisinstdir}/share/registry/impress.xcd
-%{basisinstdir}/program/pagein-impress
 %dir %{baseinstdir}
+%{baseinstdir}/help/en/simpress.*
 %dir %{baseinstdir}/program
+%{baseinstdir}/program/libanimcorelo.so
+%{baseinstdir}/program/libplacewarelo.so
+%dir %{baseinstdir}/share/config
+%dir %{baseinstdir}/share/config/soffice.cfg
+%dir %{baseinstdir}/share/config/soffice.cfg/simpress
+%{baseinstdir}/share/config/soffice.cfg/simpress/effects.xml
+%{baseinstdir}/share/config/soffice.cfg/simpress/transitions.xml
+%{baseinstdir}/share/registry/impress.xcd
+%{baseinstdir}/program/pagein-impress
 %{baseinstdir}/program/simpress
 %{_datadir}/applications/libreoffice-impress.desktop
 %{_bindir}/ooimpress
@@ -2158,18 +2117,14 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files math
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%{basisinstdir}/help/en/smath.*
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libbf_sm%{SOPOST}.so
-%{basisinstdir}/program/libsm%{SOPOST}.so
-%{basisinstdir}/program/libsmd%{SOPOST}.so
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/bf_smen-US.res
-%{basisinstdir}/program/resource/smen-US.res
-%{basisinstdir}/share/registry/math.xcd
 %dir %{baseinstdir}
+%{baseinstdir}/help/en/smath.*
 %dir %{baseinstdir}/program
+%{baseinstdir}/program/libsmlo.so
+%{baseinstdir}/program/libsmdlo.so
+%dir %{baseinstdir}/program/resource
+%{baseinstdir}/program/resource/smen-US.res
+%{baseinstdir}/share/registry/math.xcd
 %{baseinstdir}/program/smath
 %{_datadir}/applications/libreoffice-math.desktop
 %{_bindir}/oomath
@@ -2182,51 +2137,48 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files graphicfilter
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libflash%{SOPOST}.so
-%{basisinstdir}/program/libsvgfilter%{SOPOST}.so
-%{basisinstdir}/share/registry/graphicfilter.xcd
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/libflashlo.so
+%{baseinstdir}/program/libsvgfilterlo.so
+%{baseinstdir}/share/registry/graphicfilter.xcd
 
 %files xsltfilter
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/share/xslt
-%{basisinstdir}/share/xslt/docbook
-%dir %{basisinstdir}/share/xslt/export
-%{basisinstdir}/share/xslt/export/uof
-%{basisinstdir}/share/xslt/export/xhtml
-%dir %{basisinstdir}/share/xslt/import
-%{basisinstdir}/share/xslt/import/uof
-%{basisinstdir}/share/registry/xsltfilter.xcd
+%dir %{baseinstdir}
+%dir %{baseinstdir}/share/xslt
+%{baseinstdir}/share/xslt/docbook
+%dir %{baseinstdir}/share/xslt/export
+%{baseinstdir}/share/xslt/export/uof
+%{baseinstdir}/share/xslt/export/xhtml
+%dir %{baseinstdir}/share/xslt/import
+%{baseinstdir}/share/xslt/import/uof
+%{baseinstdir}/share/registry/xsltfilter.xcd
 
 %files javafilter
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%dir %{basisinstdir}/program/classes
-%{basisinstdir}/program/classes/aportisdoc.jar
-%{basisinstdir}/program/classes/pexcel.jar
-%{basisinstdir}/program/classes/pocketword.jar
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%dir %{baseinstdir}/program/classes
+%{baseinstdir}/program/classes/aportisdoc.jar
+%{baseinstdir}/program/classes/pexcel.jar
+%{baseinstdir}/program/classes/pocketword.jar
 %{_datadir}/applications/libreoffice-javafilter.desktop
-%{basisinstdir}/share/registry/palm.xcd
-%{basisinstdir}/share/registry/pocketexcel.xcd
-%{basisinstdir}/share/registry/pocketword.xcd
+%{baseinstdir}/share/registry/palm.xcd
+%{baseinstdir}/share/registry/pocketexcel.xcd
+%{baseinstdir}/share/registry/pocketword.xcd
 
-%files testtools
+%files postgresql
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libcommuni%{SOPOST}.so
-%{basisinstdir}/program/libsimplecm%{SOPOST}.so
-%{basisinstdir}/program/testtoolrc
-%{basisinstdir}/program/testtool.bin
-%dir %{basisinstdir}/program/resource
-%{basisinstdir}/program/resource/stten-US.res
+%{baseinstdir}/program/postgresql-sdbc.uno.so
+%{baseinstdir}/program/postgresql-sdbc-impl.uno.so
+%{baseinstdir}/program/postgresql-sdbc.ini
+%{baseinstdir}/program/services/postgresql-sdbc.rdb
+%{baseinstdir}/share/registry/postgresqlsdbc.xcd
 
 %files ure
 %defattr(-,root,root,-)
-%doc solver/%{OFFICEUPD}/unxlng*/bin/ure/LICENSE
+%doc solver/unxlng*/bin/ure/LICENSE
 %dir %{baseinstdir}
 %{ureinstdir}
 
@@ -2244,113 +2196,244 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 
 %files headless
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libbasebmp%{SOPOST}.so
-%{basisinstdir}/program/libvclplug_svp%{SOPOST}.so
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/libbasebmplo.so
+%{baseinstdir}/program/libvclplug_svplo.so
 
 %files pyuno
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/libpyuno.so
-%{basisinstdir}/program/officehelper.py*
-%{basisinstdir}/program/pythonloader.py*
-%{basisinstdir}/program/pythonloader.uno.so
-%{basisinstdir}/program/pythonloader.unorc
-%{basisinstdir}/program/pyuno.so
-%dir %{basisinstdir}/share/Scripts
-%{basisinstdir}/share/Scripts/python
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/libpyuno.so
+%{baseinstdir}/program/pythonloader.py*
+%{baseinstdir}/program/pythonloader.uno.so
+%{baseinstdir}/program/pythonloader.unorc
+%{baseinstdir}/program/pyuno.so
+%{baseinstdir}/program/wizards
+%dir %{baseinstdir}/share/Scripts
+%{baseinstdir}/share/Scripts/python
 %{python_sitearch}/uno.py*
 %{python_sitearch}/unohelper.py*
 %{baseinstdir}/share/extensions/script-provider-for-python
-%{basisinstdir}/share/registry/pyuno.xcd
+%{baseinstdir}/share/registry/pyuno.xcd
 
 %if %{undefined rhel}
 %files kde
 %defattr(-,root,root,-)
-%dir %{basisinstdir}
-%dir %{basisinstdir}/program
-%{basisinstdir}/program/kde4be1.uno.so
-%{basisinstdir}/program/fps_kde4.uno.so
-%{basisinstdir}/program/libvclplug_kde4%{SOPOST}.so
+%dir %{baseinstdir}
+%dir %{baseinstdir}/program
+%{baseinstdir}/program/kde-open-url
+%{baseinstdir}/program/kde4be1.uno.so
+%{baseinstdir}/program/fps_kde4.uno.so
+%{baseinstdir}/program/libvclplug_kde4lo.so
+%endif
+
+%if %{with binfilter}
+%files binfilter
+%defattr(-,root,root,-)
+%{baseinstdir}/program/legacy_binfilters.rdb
+%{baseinstdir}/program/libbf_frmlo.so
+%{baseinstdir}/program/libbf_golo.so
+%{baseinstdir}/program/libbf_migratefilterlo.so
+%{baseinstdir}/program/libbf_ofalo.so
+%{baseinstdir}/program/libbf_sblo.so
+%{baseinstdir}/program/libbf_schlo.so
+%{baseinstdir}/program/libbf_sclo.so
+%{baseinstdir}/program/libbf_sdlo.so
+%{baseinstdir}/program/libbf_smlo.so
+%{baseinstdir}/program/libbf_solo.so
+%{baseinstdir}/program/libbf_svtlo.so
+%{baseinstdir}/program/libbf_svxlo.so
+%{baseinstdir}/program/libbf_swlo.so
+%{baseinstdir}/program/libbf_wrapperlo.so
+%{baseinstdir}/program/libbf_xolo.so
+%{baseinstdir}/program/libbindetlo.so
+%{baseinstdir}/program/liblegacy_binfilterslo.so
+%{baseinstdir}/program/resource/bf_frmen-US.res
+%{baseinstdir}/program/resource/bf_ofaen-US.res
+%{baseinstdir}/program/resource/bf_scen-US.res
+%{baseinstdir}/program/resource/bf_schen-US.res
+%{baseinstdir}/program/resource/bf_sden-US.res
+%{baseinstdir}/program/resource/bf_smen-US.res
+%{baseinstdir}/program/resource/bf_svten-US.res
+%{baseinstdir}/program/resource/bf_svxen-US.res
+%{baseinstdir}/program/resource/bf_swen-US.res
+%{baseinstdir}/share/registry/binfilter.xcd
+%{_datadir}/applications/libreoffice-binfilter.desktop
 %endif
 
 %changelog
-* Mon Jan 30 2012 Arkady L. Shane <ashejn@russianfedora.ru> - 3.4.5.2-1.R
-- rebuilt for EL6
+* Wed Feb 29 2012 Caolán McNamara <caolanm@redhat.com> - 3.5.1.1-2
+- Resolves: rhbz#788045 swriter --help doesn't show help
+- Resolves: rhbz#798667 missing .desktop icons
 
-* Tue Jan 17 2012 David Tardon <dtardon@redhat.com> - 3.4.5.2-1
-- new upstream version 3.4.5
-- drop integrated 001-add-Oracle-Java-1.7.0-recognition.patch
-- drop integrated 001-fix-horizontal-scrollbars-with-KDE-oxygen-style-bnc-.patch
-- drop integrated 001-fdo-43308-Set-the-logic-straight-for-center-across-s.patch
-- drop integrated 001-Resolves-rhbz-754051-Libreoffice-calc-crashes-when-r.patch
-- drop integrated 001-sw-fdo-39159-fdo-40482-temp-selection-print-doc.patch
+* Sun Feb 26 2012 David Tardon <dtardon@redhat.com> - 3.5.1.1-1
+- 3.5.1 rc1
+- drop 0001-Resolves-fdo-43644-survive-registered-but-unavailabl.patch
+- drop 0001-Resolves-rhbz-789622-Adapt-SDK-to-changed-paths-in-L.patch
+- drop 0001-Fix-fdo-45177-avoid-linked-undo-for-the-while.patch
+- drop 0001-Fix-some-apparent-misuses-of-RTL_CONSTASCII_USTRINGP.patch
+- drop binfilter-Fix-some-apparent-misuses-of-RTL_CONSTASCII_USTRINGP.patch
+- Resolves: fdo#45177 avoid linked undo crash
+- Fix some apparent misuses of RTL_CONSTASCII_USTRINGPARAM (cherry-picked from
+  upstream libreoffice-3-5 branch)
+
+* Tue Feb 14 2012 Stephan Bergmann <sbergman@redhat.com> - 3.5.0.3-5
+- Resolves rhbz#789622: Adapt SDK to changed paths in LO installation
+
+* Mon Feb 13 2012 Caolán McNamara <caolanm@redhat.com> - 3.5.0.3-4
+- ensure gdb .py files have the same timstamps so that multilib
+  .pyc's and .pyo's have the same content (timestamp in binary cache)
+
+* Sat Feb 11 2012 Caolán McNamara <caolanm@redhat.com> - 3.5.0.3-3
+- make sure .tree files don't get busted again
+
+* Tue Feb 07 2012 Stephan Bergmann <sbergman@redhat.com> - 3.5.0.3-2
+- junit4 -> junit
+- Resolves: rhbz#788042 skip splashscreen with quickstarter
+- with split binfilter we need fix for fdo#43644
+
+* Thu Feb 02 2012 David Tardon <dtardon@redhat.com> - 3.5.0.3-1
+- 3.5.0 rc3
+- Resolves: rhbz#786328 add nlpsolver subpackage
+- split legacy binary filters into subpackage
+
+* Thu Jan 26 2012 Stephan Bergmann <sbergman@redhat.com> - 3.5.0.2-2
+- add libreoffice-postgresql subpackage
+
+* Wed Jan 25 2012 David Tardon <dtardon@redhat.com> - 3.5.0.2-1
+- 3.5.0 rc2
+
+* Thu Jan 19 2012 David Tardon <dtardon@redhat.com> - 3.5.0.1-1
+- 3.5.0 rc1
+- drop integrated 0001-workaround-internal-compiler-error-with-gcc-4.7.patch
+- drop integrated 0001-fix-for-gcc-4.7-C-11-these-are-not-string-literal-op.patch
+- drop integrated 0001-fix-for-gcc-4.7-C-11-this-is-not-string-literal-oper.patch
+- drop integrated 0001-Revert-fast_merge-fix-mis-merge-of-first-module-s-st.patch
+- drop integrated 0001-fix-writing-of-strings-from-the-first-module.patch
+- drop integrated 0001-refactor-slightly-to-avoid-link-problems-with-gcc-4..patch
+
+* Fri Jan 13 2012 David Tardon <dtardon@redhat.com> - 3.4.99.3-1
+- 3.5.0 beta3
+- drop integrated 0001-fix-syntactic-error.patch
+- drop integrated 0001-gcc-trunk-fix-error-unable-to-find-string-literal-op.patch
+- drop integrated 0001-gcc-trunk-avoid-confusion.patch
+- drop integrated 0001-workaround-for-LO-namespace-pollution-breaking-KDE4-.patch
+- drop integrated 0001-smath-does-not-handle-accents-in-MathML.patch
+- Resolves: rhbz#533318 smath does not handle accents in MathML
 - Resolves: rhbz#771108 English menu in writer despite installation of
   libreoffice-langpack-de
-- Resolves: rhbz#661738 Very slow java database operations:
-  Attach/DetachCurrentThread
-- Resolves: fdo#44078 fix font alias name problems
 
-* Fri Jan 06 2012 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-7
-- Resolves: fdo#40482 Writer view options destroyed by printing
-- Resolves: rhbz#533318 smath does not handle accents in MathML
+* Fri Jan 06 2012 David Tardon <dtardon@redhat.com> - 3.4.99.2-2
+- rebuild with gcc 4.7
+
+* Wed Dec 21 2011 David Tardon <dtardon@redhat.com> - 3.4.99.2-1
+- 3.5.0 beta2
+- drop integrated 0001-Resolves-rhbz-761009-IFSD_Equal-is-asymmetrical.patch
+- drop integrated 0001-Resolves-rhbz-767708-avoid-SIGBUS-writing-to-overcom.patch
+- drop integrated 0001-force-gbuild-stage-for-CustomTargets.patch
+- drop integrated 0001-these-translations-do-already-exist-in-translations-.patch
+- drop integrated 0001-Fix-typo-and-clean-up.patch
+- use system mysql-connector-c++
+
+* Sun Dec 18 2011 David Tardon <dtardon@redhat.com> - 3.4.99.1-1
+- 3.5.0 beta1
+- drop integrated 0001-Related-fdo-37195-migrationoo3-not-registered.patch
+- drop integrated 0001-Related-i58612-don-t-crash-anyway.patch
+- drop integrated 0001-Related-rhbz-652604-better-survive-exceptions-thrown.patch
+- drop integrated 0001-Related-rhbz-702833-addEventListener-without-removeE.patch
+- drop integrated 0001-Related-rhbz-711087-band-aid.patch
+- drop integrated 0001-Related-rhbz-718976-crash-in-SwTxtSizeInfo-GetMultiC.patch
+- drop integrated 0001-Related-rhbz-730225-avoid-segv-in-ld-this-was-set-to.patch
+- drop integrated 0001-Related-rhbz-753201-fedora-ant-java-1.5.0-gcj-won-t-.patch
+- drop integrated 0001-Resolves-fdo-32665-handle-that-FreeSerif-lacks-some-.patch
+- drop integrated 0001-Resolves-rhbz-693265-fix-crash-from-unhandled-except.patch
+- drop integrated 0001-Resolves-rhbz-695509-crash-in-RefreshDocumentLB.patch
+- drop integrated 0001-Resolves-rhbz-713154-pdf-export-dialog-too-tall-to-f.patch
+- drop integrated 0001-Resolves-rhbz-715549-use-fontconfig-s-detected-forma.patch
+- drop integrated 0001-Resolves-rhbz-738255-avoid-crash-on-NULL-pointer.patch
+- drop integrated 0001-Resolves-rhbz-751290-KDE-black-on-dark-tooltips.patch
+- drop integrated 0001-add-Oracle-Java-1.7.0-recognition.patch
+- drop integrated 0001-avoid-using-com.sun.org-apis.patch
+- drop integrated 0001-bubble-down-configure-test-findings-on-visibility.patch
+- drop integrated 0001-fix-horizontal-scrollbars-with-KDE-oxygen-style-bnc-.patch
+- drop integrated 0001-gtk3-fix-cairo-canvas-crash-for-non-X-or-svp-backend.patch
+- drop integrated 0001-helgrind-Related-rhbz-655686-get-order-of-shutdown-c.patch
+- drop integrated 0001-rhbz-667082-do-not-crash-importing-section-containin.patch
+- drop integrated 0001-rhbz-702635-set-correct-page-number-when-exporting-s.patch
+- drop integrated Backport-reading-AES-encrypted-ODF-1.2-documents.patch
+- drop integrated gdb-pretty-printers.patch
+- drop integrated kde4configure.patch
+- drop integrated libreoffice-ppc64.patch
+- drop integrated openoffice.org-3.3.0.ooo108637.sfx2.uisavedir.patch
+- drop integrated openoffice.org-3.3.0.ooo113273.desktop.resolvelinks.patch
+- drop integrated vbahelper.visibility.patch
+- drop libreoffice-testtools subpackage, because testtool has been
+  removed by upstream
 
 * Thu Dec 15 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-6
 - Resolves: rhbz#761009 IFSD_Equal is asymmetrical
-- Resolves: rhbz#754051 Libreoffice calc crashes when re-opening a xlxs file
 - Resolves: rhbz#767708 write to mmap'ed file w/o disk space: SIGBUS
 
-* Fri Dec 09 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-5
-- Resolves: rhbz#759647 dispose clears mpPresTimer
-- Resolves: rhbz#761558 center-across-selection fix
-
-* Wed Nov 30 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-4
+* Tue Nov 29 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-5
 - Resolves: rhbz#757653 fix headless crash with cairo canvas
-- Resolves: rhbz#758338 KDE build problems
 
-* Wed Nov 23 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-3
-- Resolves: rhbz#751290 kde black on dark-grey tooltip-texts
+* Tue Nov 22 2011 Lukas Tinkl <ltinkl@redhat.com> - 3.4.4.2-4
+- Resolves: rhbz#751290 - [kde] LibreOffice has black on dark-grey tooltip-texts
 
-* Fri Nov 11 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-2
+* Fri Nov 11 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.2-3
+- Related: fdo#42534 0001-Related-i58612-don-t-crash-anyway.patch
 - Resolves: fdo#42749 KDE oxygen theme and scrollbars
 
-* Fri Nov 11 2011 David Tardon <dtardon@redhat.com> - 3.4.4.2-1
-- new upstream version 3.4.4
+* Thu Nov 10 2011 Stephan Bergmann <sbergman@redhat.com> - 3.4.4.2-2
+- Patch to backport reading AES-encrypted ODF 1.2 documents
 
-* Thu Nov 10 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-16
-- Resolves: rhbz#751982 shadowed m_aXineramaScreenIndexMap crash
+* Thu Nov 03 2011 David Tardon <dtardon@redhat.com> - 3.4.4.2-1
+- 3.4.4 rc2
 
-* Thu Oct 27 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-15
-- Related: rhbz#748585 throw the additional requires away, because it
-  does not help
-- add possible fix for detection of java 7
+* Fri Oct 28 2011 Rex Dieter <rdieter@fedoraproject.org> - 1:3.4.4.1-4
+- rebuild(poppler)
 
-* Tue Oct 25 2011 David Tardon <dtardon@redhat.com> - 3.4.3.2-14
-- Resolves: rhbz#748585 libreoffice installs Java 7
+* Thu Oct 27 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.1-3
+- Resolves: rhbz#665800 missing glyph symbol shown when toggling bold/italic
+  for Sinhala text
 
-* Fri Oct 21 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-13
+* Thu Oct 27 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.4.1-2
+- possible fix for java 1.7.0 detection
+
+
+* Wed Oct 26 2011 David Tardon <dtardon@redhat.com> - 3.4.4.1-1
+- 3.4.4 rc1
+
+* Tue Oct 25 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-16
+- allow building with gcj
+
+* Fri Oct 21 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-15
 - Resolves: rhbz#747356 let Qt call XInitThreads
 - fix .sdw import
 
-* Wed Oct 19 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-12
+* Wed Oct 19 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-14
 - Related: rhbz#743750 addXineramaScreenUnique issue
+ 
+* Fri Oct 07 2011 Stephan Bergmann <sbergman@redhat.com> - 3.4.3.2-13
+- Patches to build with GCC 6.4.1
 
-* Mon Oct  3 2011 Marek Kasik <mkasik@redhat.com> - 3.4.3.2-11
-- Rebuild (poppler-0.18.0 stable)
-- Enable pagein (by Caolán McNamara)
-- add 0001-fedora-gcc-4.6.1.patch to build with fedora gcc 4.6.1
+* Fri Sep 30 2011 Marek Kasik <mkasik@redhat.com> - 3.4.3.2-12
+- Rebuild (poppler-0.18.0)
 
-* Wed Sep 21 2011 Marek Kasik <mkasik@redhat.com> - 3.4.3.2-10
-- Rebuild (poppler-0.17.3)
-
-* Tue Sep 20 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-9
+* Tue Sep 20 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-11
 - Resolves: rhbz#738133 fix bn discard string
 - Resolves: fdo#35513 avoid crash while processing incorrect print range
 
-* Thu Sep 15 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-8
+* Mon Sep 19 2011 Marek Kasik <mkasik@redhat.com> - 3.4.3.2-10
+- Rebuild (poppler-0.17.3)
+
+* Thu Sep 15 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-9
 - Resolves: rhbz#738255 avoid crash on sc inputhdl
+
+* Tue Sep 13 2011 Caolán McNamara <caolanm@redhat.com> - 3.4.3.2-8
+- Resolves: rhbz#274631 remove NoDisplay from -math.desktop
 
 * Thu Sep 08 2011 David Tardon <dtardon@redhat.com> - 3.4.3.2-7
 - rebuild for new icu

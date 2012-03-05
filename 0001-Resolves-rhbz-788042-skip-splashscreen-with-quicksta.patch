@@ -1,0 +1,24 @@
+From 13b6afe8c8e26d837fc9de9428fe2bfca1b551c6 Mon Sep 17 00:00:00 2001
+From: =?UTF-8?q?Caol=C3=A1n=20McNamara?= <caolanm@redhat.com>
+Date: Tue, 7 Feb 2012 13:36:50 +0000
+Subject: [PATCH] Resolves: rhbz#788042 skip splashscreen with --quickstart
+
+---
+ desktop/unx/source/args.c |    1 +
+ 1 files changed, 1 insertions(+), 0 deletions(-)
+
+diff --git a/desktop/unx/source/args.c b/desktop/unx/source/args.c
+index 367bac2..0952911 100644
+--- a/desktop/unx/source/args.c
++++ b/desktop/unx/source/args.c
+@@ -58,6 +58,7 @@ static struct {
+     { "nologo",     0, 1, 0, 0, NULL },
+     { "headless",   0, 1, 0, 0, NULL },
+     { "invisible",  0, 1, 0, 0, NULL },
++    { "quickstart", 0, 1, 0, 0, NULL },
+     { "minimized",  0, 1, 0, 0, NULL },
+ 
+     /* pagein bits */
+-- 
+1.7.6.5
+
