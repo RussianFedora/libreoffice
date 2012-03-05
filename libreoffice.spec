@@ -1039,6 +1039,7 @@ autoconf
  --without-system-mdds --without-system-libexttextcat \
  --without-system-libwpd --without-system-libwps --without-system-libwpg \
  --without-system-graphite --without-junit --without-system-libvisio \
+ --without-system-libcmis --without-system-redland \
  --without-myspell-dicts --without-fonts --without-ppds --without-afms \
  %{with_lang} --with-poor-help-localizations="$POORHELPS" \
  --with-external-tar=`pwd`/ext_sources --with-java-target-version=1.5 \
