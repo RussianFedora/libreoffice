@@ -1850,6 +1850,13 @@ rm -rf $RPM_BUILD_ROOT
 %{baseinstdir}/program/localebe1.uno.so
 %{baseinstdir}/program/ucpgio1.uno.so
 %{baseinstdir}/program/types/oovbaapi.rdb
+%{baseinstdir}/program/classes/lucene-analyzers-2.3.jar
+%{baseinstdir}/program/classes/lucene-core-2.3.jar
+%{baseinstdir}/program/libmsworkslo.so
+%{baseinstdir}/program/libraptor.so.1
+%{baseinstdir}/program/librasqal.so.1
+%{baseinstdir}/program/librdf.so.0
+%{baseinstdir}/program/libwpgimportlo.so
 #share unopkg
 %dir %{baseinstdir}/share/extensions
 %{baseinstdir}/share/extensions/package.txt
@@ -2269,6 +2276,8 @@ update-desktop-database %{_datadir}/applications &> /dev/null || :
 %changelog
 * Mon Mar  5 2012 Arkady L. Shane <ashejn@russianfedora.ru> - 3.5.1.2-1
 - update to 3.5.1.2
+- build with internal wpd, wps, wpg, visio, cmis, graphite2,
+  postgresql
 
 * Wed Feb 29 2012 Caolán McNamara <caolanm@redhat.com> - 3.5.1.1-2
 - Resolves: rhbz#788045 swriter --help doesn't show help
