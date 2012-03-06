@@ -62,7 +62,7 @@ Source14:       http://hg.services.openoffice.org/binaries/17410483b5b5f267aa18b
 Source15:       http://dev-www.libreoffice.org/src/0ff7d225d087793c8c2c680d77aac3e7-mdds_0.5.3.tar.bz2
 Source16:       http://hg.services.openoffice.org/binaries/067201ea8b126597670b5eff72e1f66c-mythes-1.2.0.tar.gz
 Source17:       http://dev-www.libreoffice.org/src/0981bda6548a8c8233ffce2b6e4b2a23-mysql-connector-c++-1.1.0.tar.gz
-Source18:       http://dev-www.libreoffice.org/src/776ad69a63ac1e99abed176e54ce25d9-libvisio-0.0.14.tar.bz2
+Source18:       http://dev-www.libreoffice.org/src/d28864eb2b59bb57b034c0d4662a3cee-libvisio-0.0.15.tar.bz2
 Source19:       http://dev-www.libreoffice.org/src/e1c178b18f130b40494561f02bc1a948-libexttextcat-3.2.0.tar.bz2
 Source20:       http://dev-www.libreoffice.org/src/7c2549f6b0a8bb604e6c4c729ffdcfe6-libcmis-0.1.0.tar.gz
 Source21:       http://dev-www.libreoffice.org/src/48d8169acc35f97e05d8dcdfd45be7f2-lucene-2.3.2.tar.gz
