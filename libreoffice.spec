@@ -73,6 +73,8 @@ Source25:       http://dev-www.libreoffice.org/src/9d283e02441d8cebdcd1e5d9df227
 Source26:       http://dev-www.libreoffice.org/src/c01351d7db2b205de755d58769288224-libwpd-0.9.4.tar.bz2
 Source27:       http://dev-www.libreoffice.org/src/34dd7951abbda99b7a75a09993a37965-libwps-0.2.4.tar.bz2
 Source28:       http://dev-www.libreoffice.org/src/ca66e26082cab8bb817185a116db809b-redland-1.0.8.tar.gz
+Source29:       http://dev-www.libreoffice.org/src/284e768eeda0e2898b0d5bf7e26a016e-raptor-1.4.18.tar.gz
+Source30:       http://dev-www.libreoffice.org/src/fca8706f2c4619e2fa3f8f42f8fc1e9d-rasqal-0.9.16.tar.gz
 %endif
 
 BuildRequires:  zip, findutils, autoconf, flex, bison, icu, gperf, gcc-c++
@@ -1072,6 +1074,8 @@ cp %{SOURCE25} ext_sources
 cp %{SOURCE26} ext_sources
 cp %{SOURCE27} ext_sources
 cp %{SOURCE28} ext_sources
+cp %{SOURCE29} ext_sources
+cp %{SOURCE30} ext_sources
 %endif
 touch src.downloaded
 
